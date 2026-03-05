@@ -3,45 +3,90 @@ package fr.jordi_rocafort.tle_decoder.model.parser;
 import fr.jordi_rocafort.tle_decoder.model.data.TLE;
 import fr.jordi_rocafort.tle_decoder.model.data.TleBlock;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.List;
+import java.io.RandomAccessFile;
+import java.nio.charset.StandardCharsets;
 
 public class TleFileManager {
 
+	// Équivalent de #define TLE_BLOCK_SIZE sizeof(tle_block) (25 + 70 + 70 = 165)
+	private static final int TLE_BLOCK_SIZE = 165;
+
 	/**
-	 * Scanne un fichier TLE (comme merged.tle) et renvoie l'objet TLE correspondant
-	 * à l'ID NORAD.
+	 * Équivalent de GetTLENumber(FILE* fp)
 	 */
-	public static TLE getTleFromNoradId(String filePath, int targetNoradId) throws Exception {
-		List<String> lines = Files.readAllLines(Path.of(filePath));
+	public static long getTleNumber(RandomAccessFile fp) throws Exception {
+		return fp.length() / TLE_BLOCK_SIZE;
+	}
 
-		for (int i = 0; i < lines.size(); i++) {
-			String line = lines.get(i).trim();
+	/**
+	 * Équivalent de getBlockByIndex(FILE* fp, long index)
+	 */
+	public static TleBlock getBlockByIndex(RandomAccessFile fp, long index) throws Exception {
+		// fseek(fp, new_pos, SEEK_SET);
+		long newPos = TLE_BLOCK_SIZE * index;
+		fp.seek(newPos);
 
-			// Si la ligne commence par "1 ", c'est la première ligne d'un TLE
-			if (line.startsWith("1 ")) {
-				// On extrait l'ID (caractères index 2 à 6)
-				int noradId = Integer.parseInt(line.substring(2, 7).trim());
+		byte[] firstLineBytes = new byte[25];
+		byte[] secondLineBytes = new byte[70];
+		byte[] thirdLineBytes = new byte[70];
 
-				if (noradId == targetNoradId) {
-					// Récupération du nom du satellite (ligne précédente)
-					String name = "UNKNOWN";
-					if (i > 0) {
-						String previousLine = lines.get(i - 1).trim();
-						// On vérifie que ce n'est pas juste un fichier sans nom (ex: suite de TLE nus)
-						if (!previousLine.startsWith("1 ") && !previousLine.startsWith("2 ")) {
-							name = previousLine;
-						}
-					}
+		// fread(&output, TLE_BLOCK_SIZE, 1, fp);
+		fp.readFully(firstLineBytes);
+		fp.readFully(secondLineBytes);
+		fp.readFully(thirdLineBytes);
 
-					String line2 = lines.get(i + 1).trim();
+		// Enlève les caractères de fin de chaîne (\0) ou retours à la ligne avec trim()
+		String firstLine = new String(firstLineBytes, StandardCharsets.UTF_8).trim();
+		String secondLine = new String(secondLineBytes, StandardCharsets.UTF_8).trim();
+		String thirdLine = new String(thirdLineBytes, StandardCharsets.UTF_8).trim();
 
-					TleBlock block = new TleBlock(name, line, line2);
-					return TleParser.parseLines(block);
+		return new TleBlock(firstLine, secondLine, thirdLine);
+	}
+
+	/**
+	 * Équivalent de readNoradIdFromBlock(tle_block* block)
+	 */
+	public static int readNoradIdFromBlock(TleBlock block) {
+		// L'équivalent de la boucle for (i < 5) qui récupère SECOND_LINE[i + 2]
+		String noradCat = block.secondLine().substring(2, 7).trim();
+		return Integer.parseInt(noradCat);
+	}
+
+	/**
+	 * Équivalent de GetSingleTLE(FILE* fp, uint32_t noradId)
+	 */
+	public static TLE getSingleTLE(String filePath, int targetNoradId) throws Exception {
+		// RandomAccessFile "r" est l'équivalent de fopen(..., "r")
+		try (RandomAccessFile fp = new RandomAccessFile(filePath, "r")) {
+			long tleCount = getTleNumber(fp);
+			System.out.println("Counted the TLEs (" + tleCount + ")");
+
+			boolean found = false;
+			long i = 0;
+			TleBlock tempBlock = null;
+
+			while (!found && i < tleCount) {
+				tempBlock = getBlockByIndex(fp, i);
+				int tempNoradId = readNoradIdFromBlock(tempBlock);
+
+				found = (targetNoradId == tempNoradId);
+
+				if (found) {
+					System.out.printf("%s\n%s\n%s\n\n",
+							tempBlock.firstLine(),
+							tempBlock.secondLine(),
+							tempBlock.thirdLine());
 				}
+
+				i++;
+			}
+
+			if (found && tempBlock != null) {
+				return TleParser.parseLines(tempBlock); // Équivalent de parse_block(&tempBlock)
 			}
 		}
+
+		// Si on sort de la boucle sans rien trouver
 		throw new IllegalArgumentException("Satellite " + targetNoradId + " introuvable dans " + filePath);
 	}
 }

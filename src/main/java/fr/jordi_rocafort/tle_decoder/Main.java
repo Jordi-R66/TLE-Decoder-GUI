@@ -1,7 +1,7 @@
 package fr.jordi_rocafort.tle_decoder;
 
 import fr.jordi_rocafort.tle_decoder.model.data.*;
-import fr.jordi_rocafort.tle_decoder.model.parser.TleParser;
+import fr.jordi_rocafort.tle_decoder.model.parser.TleFileManager;
 import fr.jordi_rocafort.tle_decoder.model.physics.OrbitPropagator;
 import fr.jordi_rocafort.tle_decoder.util.TimeUtils;
 
@@ -15,14 +15,18 @@ public class Main {
 		// (format anglo-saxon)
 		Locale.setDefault(Locale.US);
 
-		// Bloc TLE de test (ISS)
-		TleBlock issBlock = new TleBlock(
-				"ISS (ZARYA)             ",
-				"1 25544U 98067A   26064.25394533  .00008604  00000+0  16717-3 0  9994",
-				"2 25544  51.6314  94.2866 0008160 158.8383 201.2944 15.48454548555643");
+		String filename = null;
+		int noradId = 0;
+
+		if (args.length == 3) {
+			filename = args[1];
+			noradId = Integer.valueOf(args[2]);
+		} else {
+			System.exit(-1);
+		}
 
 		try {
-			TLE tle = TleParser.parseLines(issBlock);
+			TLE tle = TleFileManager.getSingleTLE(filename, noradId);
 			StaticValues init = OrbitPropagator.computeStaticPhase(tle);
 
 			// Boucle temps réel

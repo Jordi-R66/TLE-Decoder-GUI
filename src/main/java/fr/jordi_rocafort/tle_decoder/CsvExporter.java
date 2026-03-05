@@ -24,7 +24,7 @@ public class CsvExporter {
 
 		try {
 			// 1. Charger le TLE depuis ton dossier existant
-			TLE tle = TleFileManager.getTleFromNoradId("TLEs/merged.tle", 25544);
+			TLE tle = TleFileManager.getSingleTLE("TLEs/merged.tle", 25544);
 
 			// 2. Calculer la phase statique une seule fois
 			StaticValues init = OrbitPropagator.computeStaticPhase(tle);
