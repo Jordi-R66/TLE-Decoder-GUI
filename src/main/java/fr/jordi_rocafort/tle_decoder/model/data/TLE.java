@@ -18,7 +18,7 @@ public record TLE(
 
 		double inclination,
 		double rightAscension,
-		double eccentrivity,
+		double eccentricity,
 		double argumentOfPerigee,
 		double meanAnomaly,
 		double meanMotion,
