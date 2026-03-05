@@ -18,9 +18,9 @@ public class Main {
 		String filename = null;
 		int noradId = 0;
 
-		if (args.length == 3) {
-			filename = args[1];
-			noradId = Integer.valueOf(args[2]);
+		if (args.length == 2) {
+			filename = args[0];
+			noradId = Integer.valueOf(args[1]);
 		} else {
 			System.exit(-1);
 		}
