@@ -4,27 +4,16 @@ import fr.jordi_rocafort.tle_decoder.model.data.*;
 import fr.jordi_rocafort.tle_decoder.model.parser.TleFileManager;
 import fr.jordi_rocafort.tle_decoder.model.physics.OrbitPropagator;
 import fr.jordi_rocafort.tle_decoder.util.TimeUtils;
+import fr.jordi_rocafort.tle_decoder.view.frames.TleDecoder;
 
 import java.time.Instant;
 import java.util.Locale;
 
+import javax.swing.SwingUtilities;
+
 public class Main {
 
-	public static void main(String[] args) {
-		// Force l'affichage des nombres avec un point "." au lieu d'une virgule ","
-		// (format anglo-saxon)
-		Locale.setDefault(Locale.US);
-
-		String filename = null;
-		int noradId = 0;
-
-		if (args.length == 2) {
-			filename = args[0];
-			noradId = Integer.valueOf(args[1]);
-		} else {
-			System.exit(-1);
-		}
-
+	public static void cliMode(String filename, int noradId) {
 		try {
 			TLE tle = TleFileManager.getSingleTLE(filename, noradId);
 			StaticValues init = OrbitPropagator.computeStaticPhase(tle);
@@ -47,6 +36,21 @@ public class Main {
 			System.err.println("Erreur fatale de la simulation :");
 			e.printStackTrace();
 		}
+	}
+
+	public static void guiMode() {
+		SwingUtilities.invokeLater(() -> {
+			TleDecoder tleDecoder = new TleDecoder();
+
+			tleDecoder.setVisible(true);
+		});
+	}
+
+	public static void main(String[] args) {
+		// Force l'affichage des nombres avec un point "." au lieu d'une virgule ","
+		// (format anglo-saxon)
+		Locale.setDefault(Locale.US);
+		guiMode();
 	}
 
 	/**
