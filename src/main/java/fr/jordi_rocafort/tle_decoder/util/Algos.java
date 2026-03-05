@@ -1,4 +1,4 @@
-package fr.jordi_rocafort.tle_decoder.model.physics;
+package fr.jordi_rocafort.tle_decoder.util;
 
 import java.util.function.DoubleBinaryOperator;
 
