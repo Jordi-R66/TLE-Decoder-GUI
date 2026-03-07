@@ -58,7 +58,7 @@ public class InputPanel extends JPanel {
 		gbc.weightx = 1.0;
 
 		loadBtn = new JButton("Open File");
-		satCombo = new JComboBox<>(new String[] { "Select an ID" });
+		satCombo = new JComboBox<>(new String[] { "Select a NORAD ID" });
 		satCombo.setEnabled(false);
 
 		gbc.gridy = 0;
