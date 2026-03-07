@@ -10,6 +10,16 @@ import java.awt.event.MouseEvent;
 
 public class OutputPanel extends JPanel {
 
+	private static OutputPanel instance = null;
+
+	public static OutputPanel getInstance() {
+		if (instance == null) {
+			instance = new OutputPanel();
+		}
+
+		return instance;
+	}
+
 	public OutputPanel() {
 		this.setLayout(new BorderLayout());
 		this.setBorder(BorderFactory.createTitledBorder("Output"));

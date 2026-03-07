@@ -7,11 +7,21 @@ public class DataPanel extends JPanel {
 	private InputPanel inputPanel;
 	private OutputPanel outputPanel;
 
+	private static DataPanel instance = null;
+
+	public static DataPanel getInstance() {
+		if (instance == null) {
+			instance = new DataPanel();
+		}
+
+		return instance;
+	}
+
 	public DataPanel() {
 		this.setLayout(new BorderLayout());
 
-		inputPanel = new InputPanel();
-		outputPanel = new OutputPanel();
+		inputPanel = InputPanel.getInstance();
+		outputPanel = OutputPanel.getInstance();
 
 		// Le séparateur vertical entre Input et Output reste, pour que tu puisses
 		// ajuster la hauteur de la zone de saisie si besoin.

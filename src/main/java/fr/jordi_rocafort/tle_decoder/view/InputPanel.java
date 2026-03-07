@@ -29,6 +29,16 @@ public class InputPanel extends JPanel {
 	private JTextArea tleTextArea;
 	private JButton confirmBtn;
 
+	private static InputPanel instance = null;
+
+	public static InputPanel getInstance() {
+		if (instance == null) {
+			instance = new InputPanel();
+		}
+
+		return instance;
+	}
+
 	private JRadioButton fileRadio, manualRadio;
 
 	public InputPanel() {

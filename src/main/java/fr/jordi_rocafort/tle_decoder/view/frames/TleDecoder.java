@@ -14,7 +14,7 @@ public class TleDecoder extends JFrame {
 		super("TLE-Decoder");
 
 		instance = this;
-		dataPanel = new DataPanel();
+		dataPanel = DataPanel.getInstance();
 
 		this.setSize(1100, 620);
 		this.setLocationRelativeTo(null);
