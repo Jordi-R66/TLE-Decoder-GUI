@@ -6,6 +6,7 @@ import javax.swing.border.EmptyBorder;
 import fr.jordi_rocafort.tle_decoder.model.data.DynamicValues;
 import fr.jordi_rocafort.tle_decoder.model.data.StaticValues;
 import fr.jordi_rocafort.tle_decoder.model.data.TLE;
+import fr.jordi_rocafort.tle_decoder.util.TimeUtils;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -27,6 +28,48 @@ public class OutputPanel extends JPanel {
 	}
 
 	public void showData(TLE tle, StaticValues init, DynamicValues instant, long currentTimestamp) {
+		model.clear();
+		String epochString = TimeUtils.timestampToDateString(init.epochTimestamp());
+		String periodString = TimeUtils.periodToString(init.T());
+		String instantString = TimeUtils.timestampToDateString(currentTimestamp);
+		String ageString = TimeUtils.deltaTimeToString(instant.deltaTime());
+
+		model.addElement(new PropertyItem("Object name", tle.name()));
+		model.addElement(new PropertyItem("NORAD ID", String.format("%d%c", tle.noradId(), tle.classification())));
+		model.addElement(new PropertyItem("COSPAR ID", String.format("%d %03d %s", tle.cosparYear(), tle.cosparLaunchNum(), tle.cosparPiece())));
+		model.addElement(new PropertyItem("EPOCH", epochString));
+		model.addElement(new PropertyItem("TLE AGE", ageString));
+		model.addElement(new PropertyItem("(MEAN MOTION)'", String.format("%.4e", tle.firstDerivMeanMotion())));
+		model.addElement(new PropertyItem("(MEAN MOTION)''", String.format("%.4e", tle.secondDerivMeanMotion())));
+
+		model.addElement(new PropertyItem("INCLINATION", String.format("%.4f degs", tle.inclination())));
+		model.addElement(new PropertyItem("LONGITUDE OF ASC. NODE", String.format("%.4f degs", tle.rightAscension())));
+		model.addElement(new PropertyItem("LONGITUDE OF PERIAPSIS", String.format("%.4f degs", tle.rightAscension() + tle.argumentOfPerigee())));
+		model.addElement(new PropertyItem("ECCENTRICITY", String.format("%.7f", tle.eccentricity())));
+		model.addElement(new PropertyItem("ARG. OF PERIAPSIS", String.format("%.4f degs", tle.argumentOfPerigee())));
+		model.addElement(new PropertyItem("MEAN ANOMALY", String.format("%.4f degs", tle.meanAnomaly())));
+		model.addElement(new PropertyItem("MEAN MOTION", String.format("%.8f rev/day", tle.meanMotion())));
+
+		model.addElement(new PropertyItem("ORBITAL PERIOD", String.format("%.4f secs (%s)", init.T(), periodString)));
+		model.addElement(new PropertyItem("SEMI MAJOR AXIS", String.format("%.0f m", init.a())));
+
+		model.addElement(new PropertyItem("ALTITUDE AT APOGEE", String.format("%.4f m", init.apoAlt())));
+		model.addElement(new PropertyItem("ALTITUDE AT PERIGEE", String.format("%.4f m", init.periAlt())));
+		model.addElement(new PropertyItem("ALTITUDE AT EPOCH", String.format("%.4f m", init.epochAlt())));
+
+		model.addElement(new PropertyItem("SPEED @ AP", String.format("%.4f m/s", init.apoSpd())));
+		model.addElement(new PropertyItem("SPEED @ PE", String.format("%.4f m/s", init.periSpd())));
+		model.addElement(new PropertyItem("SPEED @ EPOCH", String.format("%.4f m/s", init.epochSpd())));
+
+		model.addElement(new PropertyItem("DATE", instantString));
+		model.addElement(new PropertyItem("X Coord", String.format("%.2f m", instant.coords3d().x())));
+		model.addElement(new PropertyItem("Y Coord", String.format("%.2f m", instant.coords3d().y())));
+		model.addElement(new PropertyItem("Z Coord", String.format("%.2f m", instant.coords3d().z())));
+
+		model.addElement(new PropertyItem("GROUND COORDINATES", String.format("%.5f, %.5f", instant.geoCoords().lat(), instant.geoCoords().lng())));
+		model.addElement(new PropertyItem("ALTITUDE", String.format("%.0f m", instant.geoCoords().altitude())));
+
+		model.addElement(new PropertyItem("VELOCITY", String.format("%.2f m/s", instant.speed())));
 		return;
 	}
 
@@ -36,13 +79,6 @@ public class OutputPanel extends JPanel {
 
 		// Modèle de données pour la liste
 		model = new DefaultListModel<>();
-		model.addElement(new PropertyItem("Object name", "ROBUSTA-3A"));
-		model.addElement(new PropertyItem("NORAD ID", "60243U"));
-		model.addElement(new PropertyItem("EPOCH", "2026-03-05 13:24:53 UTC"));
-		model.addElement(new PropertyItem("INCLINATION", "61.9866 degs"));
-		model.addElement(new PropertyItem("ECCENTRICITY", "0.0052320"));
-		model.addElement(new PropertyItem("SEMI MAJOR AXIS", "6914449 m"));
-		model.addElement(new PropertyItem("VELOCITY", "7626.79 m/s"));
 
 		// Création de la liste
 		JList<PropertyItem> list = new JList<>(model);
