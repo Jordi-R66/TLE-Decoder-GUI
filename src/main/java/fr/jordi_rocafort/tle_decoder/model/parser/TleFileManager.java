@@ -5,6 +5,7 @@ import fr.jordi_rocafort.tle_decoder.model.data.TleBlock;
 
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 
 public class TleFileManager {
 
@@ -43,6 +44,10 @@ public class TleFileManager {
 		return new TleBlock(firstLine, secondLine, thirdLine);
 	}
 
+	public static String readObjectNameFromBlock(TleBlock block) {
+		return block.firstLine().trim();
+	}
+
 	/**
 	 * Équivalent de readNoradIdFromBlock(tle_block* block)
 	 */
@@ -50,6 +55,28 @@ public class TleFileManager {
 		// L'équivalent de la boucle for (i < 5) qui récupère SECOND_LINE[i + 2]
 		String noradCat = block.secondLine().substring(2, 7).trim();
 		return Integer.parseInt(noradCat);
+	}
+
+	public static ArrayList<BlockInformation> getAllNoradIDs(String filePath) throws Exception {
+		ArrayList<BlockInformation> outputList = new ArrayList<>();
+
+		try (RandomAccessFile fp = new RandomAccessFile(filePath, "r")) {
+			long tleCount = (long)getTleNumber(fp);
+			outputList.ensureCapacity(tleCount < Integer.MAX_VALUE ? (int)tleCount : Integer.MAX_VALUE);
+
+			for (long i = 0; i < tleCount; i++) {
+				TleBlock block = getBlockByIndex(fp, i);
+				int noradId = readNoradIdFromBlock(block);
+
+				outputList.add(new BlockInformation(filePath, noradId, i));
+			}
+		}
+
+		if (outputList.size() > 1) {
+			outputList.sort(null);
+		}
+
+		return outputList;
 	}
 
 	/**
