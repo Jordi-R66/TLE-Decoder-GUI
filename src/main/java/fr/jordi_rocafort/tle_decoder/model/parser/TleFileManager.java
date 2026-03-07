@@ -67,8 +67,9 @@ public class TleFileManager {
 			for (long i = 0; i < tleCount; i++) {
 				TleBlock block = getBlockByIndex(fp, i);
 				int noradId = readNoradIdFromBlock(block);
+				String objName = readObjectNameFromBlock(block);
 
-				outputList.add(new BlockInformation(filePath, noradId, i));
+				outputList.add(new BlockInformation(objName, noradId, i));
 			}
 		}
 
