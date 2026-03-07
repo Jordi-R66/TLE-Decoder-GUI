@@ -1,6 +1,9 @@
 package fr.jordi_rocafort.tle_decoder.view;
 
 import javax.swing.*;
+
+import fr.jordi_rocafort.tle_decoder.controller.*;
+
 import java.awt.*;
 
 public class DataPanel extends JPanel {
@@ -22,6 +25,7 @@ public class DataPanel extends JPanel {
 
 		inputPanel = InputPanel.getInstance();
 		outputPanel = OutputPanel.getInstance();
+		FileSelectionController.getInstance();
 
 		// Le séparateur vertical entre Input et Output reste, pour que tu puisses
 		// ajuster la hauteur de la zone de saisie si besoin.
@@ -33,5 +37,7 @@ public class DataPanel extends JPanel {
 		splitPane.setDividerLocation(180);
 
 		this.add(splitPane, BorderLayout.CENTER);
+
+		DecodeController.getInstance();
 	}
 }

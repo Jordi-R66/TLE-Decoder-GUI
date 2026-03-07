@@ -1,0 +1,92 @@
+package fr.jordi_rocafort.tle_decoder.controller;
+
+import fr.jordi_rocafort.tle_decoder.model.data.*;
+import fr.jordi_rocafort.tle_decoder.model.parser.TleFileManager;
+import fr.jordi_rocafort.tle_decoder.model.physics.OrbitPropagator;
+import fr.jordi_rocafort.tle_decoder.view.*;
+
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class DecodeController implements ActionListener {
+	private InputPanel inputPanel;
+	private OutputPanel outputPanel;
+	private FileSelectionController fileController;
+	private TLE tle;
+	private StaticValues init;
+
+	private static DecodeController instance = null;
+
+	public static DecodeController getInstance() {
+		if (instance == null) {
+			instance = new DecodeController();
+		}
+
+		return instance;
+	}
+
+	public DecodeController() {
+		this.fileController = FileSelectionController.getInstance();
+		this.inputPanel = InputPanel.getInstance();
+		this.outputPanel = OutputPanel.getInstance();
+
+		// On attache ce contrôleur au bouton Confirmer
+		this.inputPanel.getConfirmBtn().addActionListener(this);
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		// 1. Vérifier quel mode d'entrée est sélectionné
+		if (inputPanel.getFileRadio().isSelected()) {
+			// Mode Fichier
+			if (fileController.getSelectedFilePath() == null) {
+				JOptionPane.showMessageDialog(inputPanel, "Veuillez d'abord sélectionner un fichier.", "Erreur",
+						JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+
+			if (inputPanel.getSatCombo().getSelectedIndex() <= 0) {
+				JOptionPane.showMessageDialog(inputPanel, "Veuillez sélectionner un satellite dans la liste.", "Erreur",
+						JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+
+			try {
+				String filePath = fileController.getSelectedFilePath();
+				String selectedSat = (String) inputPanel.getSatCombo().getSelectedItem();
+				System.out.println("Lancement du décodage pour le fichier : " + filePath
+						+ " | Sat: " + selectedSat);
+
+				int blockIndex = FileSelectionController.getInstance().getAssociations().get(selectedSat);
+				int noradId = TleFileManager.getAllNoradIDs(filePath).get(blockIndex).noradId();
+
+				tle = TleFileManager.getSingleTLE(filePath, noradId);
+				init = OrbitPropagator.computeStaticPhase(tle);
+			} catch (Exception exception) {
+				exception.printStackTrace();
+			}
+
+		} else {
+			// Mode Manuel
+			String tleText = inputPanel.getTleTextArea().getText().trim();
+			if (tleText.isEmpty()) {
+				JOptionPane.showMessageDialog(inputPanel, "Le bloc TLE est vide.", "Erreur",
+						JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+
+			System.out.println("Lancement du décodage pour le texte manuel :\n" + tleText);
+
+			// TODO: Appeler TleParser pour décoder la chaîne de caractères brute
+		}
+
+		long timestamp = this.init.epochTimestamp();
+		DynamicValues dynVals = OrbitPropagator.computeDynamicPhase(tle, init, this.init.epochTimestamp());
+
+		// 2. Mise à jour de la vue (Simulation pour le moment)
+		outputPanel.showData(this.tle, this.init, dynVals, timestamp);
+		JOptionPane.showMessageDialog(inputPanel, "Décodage simulé avec succès !", "Info",
+				JOptionPane.INFORMATION_MESSAGE);
+	}
+}

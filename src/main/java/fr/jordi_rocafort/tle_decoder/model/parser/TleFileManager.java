@@ -6,11 +6,16 @@ import fr.jordi_rocafort.tle_decoder.model.data.TleBlock;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class TleFileManager {
 
 	// Équivalent de #define TLE_BLOCK_SIZE sizeof(tle_block) (25 + 70 + 70 = 165)
 	private static final int TLE_BLOCK_SIZE = 165;
+
+	private static HashMap<String, ArrayList<BlockInformation>> associations = new HashMap<>();
+
+	public static HashMap<String, ArrayList<BlockInformation>> getAssociations() { return associations; }
 
 	/**
 	 * Équivalent de GetTLENumber(FILE* fp)
@@ -60,21 +65,27 @@ public class TleFileManager {
 	public static ArrayList<BlockInformation> getAllNoradIDs(String filePath) throws Exception {
 		ArrayList<BlockInformation> outputList = new ArrayList<>();
 
-		try (RandomAccessFile fp = new RandomAccessFile(filePath, "r")) {
-			long tleCount = (long)getTleNumber(fp);
-			outputList.ensureCapacity(tleCount < Integer.MAX_VALUE ? (int)tleCount : Integer.MAX_VALUE);
+		if (!associations.containsKey(filePath)) {
+			try (RandomAccessFile fp = new RandomAccessFile(filePath, "r")) {
+				long tleCount = (long)getTleNumber(fp);
+				outputList.ensureCapacity(tleCount < Integer.MAX_VALUE ? (int)tleCount : Integer.MAX_VALUE);
 
-			for (long i = 0; i < tleCount; i++) {
-				TleBlock block = getBlockByIndex(fp, i);
-				int noradId = readNoradIdFromBlock(block);
-				String objName = readObjectNameFromBlock(block);
+				for (long i = 0; i < tleCount; i++) {
+					TleBlock block = getBlockByIndex(fp, i);
+					int noradId = readNoradIdFromBlock(block);
+					String objName = readObjectNameFromBlock(block);
 
-				outputList.add(new BlockInformation(objName, noradId, i));
+					outputList.add(new BlockInformation(objName, noradId, i));
+				}
 			}
-		}
 
-		if (outputList.size() > 1) {
-			outputList.sort(null);
+			if (outputList.size() > 1) {
+				outputList.sort(null);
+			}
+
+			associations.put(filePath, outputList);
+		} else {
+			outputList = associations.get(filePath);
 		}
 
 		return outputList;

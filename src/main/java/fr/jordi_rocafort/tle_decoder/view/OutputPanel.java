@@ -2,6 +2,11 @@ package fr.jordi_rocafort.tle_decoder.view;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+
+import fr.jordi_rocafort.tle_decoder.model.data.DynamicValues;
+import fr.jordi_rocafort.tle_decoder.model.data.StaticValues;
+import fr.jordi_rocafort.tle_decoder.model.data.TLE;
+
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -10,6 +15,7 @@ import java.awt.event.MouseEvent;
 
 public class OutputPanel extends JPanel {
 
+	private DefaultListModel<PropertyItem> model;
 	private static OutputPanel instance = null;
 
 	public static OutputPanel getInstance() {
@@ -20,12 +26,16 @@ public class OutputPanel extends JPanel {
 		return instance;
 	}
 
+	public void showData(TLE tle, StaticValues init, DynamicValues instant, long currentTimestamp) {
+		return;
+	}
+
 	public OutputPanel() {
 		this.setLayout(new BorderLayout());
 		this.setBorder(BorderFactory.createTitledBorder("Output"));
 
 		// Modèle de données pour la liste
-		DefaultListModel<PropertyItem> model = new DefaultListModel<>();
+		model = new DefaultListModel<>();
 		model.addElement(new PropertyItem("Object name", "ROBUSTA-3A"));
 		model.addElement(new PropertyItem("NORAD ID", "60243U"));
 		model.addElement(new PropertyItem("EPOCH", "2026-03-05 13:24:53 UTC"));
@@ -74,6 +84,8 @@ public class OutputPanel extends JPanel {
 			this.key = key;
 			this.value = value;
 		}
+
+		public void setValue(String val) { value = val; }
 	}
 
 	// --- LE RENDU PERSONNALISÉ POUR CHAQUE CELLULE ---
