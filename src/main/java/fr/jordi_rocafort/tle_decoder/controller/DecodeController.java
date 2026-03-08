@@ -11,10 +11,10 @@ import java.awt.event.ActionListener;
 
 public class DecodeController implements ActionListener {
 	private InputPanel inputPanel;
-	private OutputPanel outputPanel;
 	private FileSelectionController fileController;
 	private TLE tle;
 	private StaticValues init;
+	private SimulationEngine simulationEngine;
 
 	private static DecodeController instance = null;
 
@@ -29,7 +29,7 @@ public class DecodeController implements ActionListener {
 	public DecodeController() {
 		this.fileController = FileSelectionController.getInstance();
 		this.inputPanel = InputPanel.getInstance();
-		this.outputPanel = OutputPanel.getInstance();
+		this.simulationEngine = new SimulationEngine();
 
 		// On attache ce contrôleur au bouton Confirmer
 		this.inputPanel.getConfirmBtn().addActionListener(this);
@@ -81,12 +81,9 @@ public class DecodeController implements ActionListener {
 			// TODO: Appeler TleParser pour décoder la chaîne de caractères brute
 		}
 
-		long timestamp = this.init.epochTimestamp();
-		DynamicValues dynVals = OrbitPropagator.computeDynamicPhase(tle, init, this.init.epochTimestamp());
-
-		// 2. Mise à jour de la vue (Simulation pour le moment)
-		outputPanel.showData(this.tle, this.init, dynVals, timestamp);
-		JOptionPane.showMessageDialog(inputPanel, "Décodage simulé avec succès !", "Info",
-				JOptionPane.INFORMATION_MESSAGE);
+		// 2. Lancement en temps réel
+		if (this.tle != null && this.init != null) {
+			simulationEngine.startSimulation(tle, init);
+		}
 	}
 }
