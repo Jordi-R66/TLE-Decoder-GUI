@@ -6,6 +6,7 @@ import fr.jordi_rocafort.tle_decoder.model.data.DynamicValues;
 import fr.jordi_rocafort.tle_decoder.model.data.StaticValues;
 import fr.jordi_rocafort.tle_decoder.model.data.TLE;
 import fr.jordi_rocafort.tle_decoder.model.physics.OrbitPropagator;
+import fr.jordi_rocafort.tle_decoder.view.GroundTrackMapPanel;
 import fr.jordi_rocafort.tle_decoder.view.OutputPanel;
 
 import java.time.Instant;
@@ -35,6 +36,7 @@ public class SimulationEngine {
 				// 2. Mise à jour de l'UI (Délégué au thread Swing graphique)
 				SwingUtilities.invokeLater(() -> {
 					OutputPanel.getInstance().showData(currentTle, currentInit, instant, currentTimestamp);
+					GroundTrackMapPanel.getInstance().updatePosition(instant.geoCoords());
 				});
 
 				// 3. Pause (~60 FPS)

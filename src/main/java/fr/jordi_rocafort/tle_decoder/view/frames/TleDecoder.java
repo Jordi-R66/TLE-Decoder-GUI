@@ -20,13 +20,13 @@ public class TleDecoder extends JFrame {
 		this.setLocationRelativeTo(null);
 		this.setLayout(new BorderLayout());
 
-		// Panneau temporaire de droite (C, D, E)
+		/*// Panneau temporaire de droite (C, D, E)
 		JPanel rightPanelPlaceholder = new JPanel();
-		rightPanelPlaceholder.setBackground(new Color(40, 44, 52));
+		rightPanelPlaceholder.setBackground(new Color(40, 44, 52));*/
 
 		// Placement : DataPanel fixe à gauche, le reste prend tout l'espace central
 		this.add(dataPanel, BorderLayout.WEST);
-		this.add(rightPanelPlaceholder, BorderLayout.CENTER);
+		this.add(GroundTrackMapPanel.getInstance(), BorderLayout.CENTER);
 
 		this.addWindowListener(new WindowAdapter() {
 			@Override
