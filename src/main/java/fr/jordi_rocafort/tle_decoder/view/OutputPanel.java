@@ -2,6 +2,7 @@ package fr.jordi_rocafort.tle_decoder.view;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 
 import fr.jordi_rocafort.tle_decoder.model.data.DynamicValues;
 import fr.jordi_rocafort.tle_decoder.model.data.StaticValues;
@@ -13,153 +14,169 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.HashMap;
+import java.util.Map;
 
 public class OutputPanel extends JPanel {
 
-	private DefaultListModel<PropertyItem> model;
 	private static OutputPanel instance = null;
+
+	// Dictionnaire pour stocker et mettre à jour rapidement les labels sans recréer
+	// l'UI
+	private Map<String, JLabel> valueLabels;
 
 	public static OutputPanel getInstance() {
 		if (instance == null) {
 			instance = new OutputPanel();
 		}
-
 		return instance;
-	}
-
-	public void showData(TLE tle, StaticValues init, DynamicValues instant, long currentTimestamp) {
-		model.clear();
-		String epochString = TimeUtils.timestampToDateString(init.epochTimestamp());
-		String periodString = TimeUtils.periodToString(init.T());
-		String instantString = TimeUtils.timestampToDateString(currentTimestamp);
-		String ageString = TimeUtils.deltaTimeToString(instant.deltaTime());
-
-		model.addElement(new PropertyItem("Object name", tle.name()));
-		model.addElement(new PropertyItem("NORAD ID", String.format("%d%c", tle.noradId(), tle.classification())));
-		model.addElement(new PropertyItem("COSPAR ID", String.format("%d %03d %s", tle.cosparYear(), tle.cosparLaunchNum(), tle.cosparPiece())));
-		model.addElement(new PropertyItem("EPOCH", epochString));
-		model.addElement(new PropertyItem("TLE AGE", ageString));
-		model.addElement(new PropertyItem("(MEAN MOTION)'", String.format("%.4e", tle.firstDerivMeanMotion())));
-		model.addElement(new PropertyItem("(MEAN MOTION)''", String.format("%.4e", tle.secondDerivMeanMotion())));
-
-		model.addElement(new PropertyItem("INCLINATION", String.format("%.4f degs", tle.inclination())));
-		model.addElement(new PropertyItem("LONGITUDE OF ASC. NODE", String.format("%.4f degs", tle.rightAscension())));
-		model.addElement(new PropertyItem("LONGITUDE OF PERIAPSIS", String.format("%.4f degs", tle.rightAscension() + tle.argumentOfPerigee())));
-		model.addElement(new PropertyItem("ECCENTRICITY", String.format("%.7f", tle.eccentricity())));
-		model.addElement(new PropertyItem("ARG. OF PERIAPSIS", String.format("%.4f degs", tle.argumentOfPerigee())));
-		model.addElement(new PropertyItem("MEAN ANOMALY", String.format("%.4f degs", tle.meanAnomaly())));
-		model.addElement(new PropertyItem("MEAN MOTION", String.format("%.8f rev/day", tle.meanMotion())));
-
-		model.addElement(new PropertyItem("ORBITAL PERIOD", String.format("%.4f secs (%s)", init.T(), periodString)));
-		model.addElement(new PropertyItem("SEMI MAJOR AXIS", String.format("%.0f m", init.a())));
-
-		model.addElement(new PropertyItem("ALTITUDE AT APOGEE", String.format("%.4f m", init.apoAlt())));
-		model.addElement(new PropertyItem("ALTITUDE AT PERIGEE", String.format("%.4f m", init.periAlt())));
-		model.addElement(new PropertyItem("ALTITUDE AT EPOCH", String.format("%.4f m", init.epochAlt())));
-
-		model.addElement(new PropertyItem("SPEED @ AP", String.format("%.4f m/s", init.apoSpd())));
-		model.addElement(new PropertyItem("SPEED @ PE", String.format("%.4f m/s", init.periSpd())));
-		model.addElement(new PropertyItem("SPEED @ EPOCH", String.format("%.4f m/s", init.epochSpd())));
-
-		model.addElement(new PropertyItem("DATE", instantString));
-		model.addElement(new PropertyItem("X Coord", String.format("%.2f m", instant.coords3d().x())));
-		model.addElement(new PropertyItem("Y Coord", String.format("%.2f m", instant.coords3d().y())));
-		model.addElement(new PropertyItem("Z Coord", String.format("%.2f m", instant.coords3d().z())));
-
-		model.addElement(new PropertyItem("GROUND COORDINATES", String.format("%.5f, %.5f", instant.geoCoords().lat(), instant.geoCoords().lng())));
-		model.addElement(new PropertyItem("ALTITUDE", String.format("%.0f m", instant.geoCoords().altitude())));
-
-		model.addElement(new PropertyItem("VELOCITY", String.format("%.2f m/s", instant.speed())));
-		return;
 	}
 
 	public OutputPanel() {
 		this.setLayout(new BorderLayout());
 		this.setBorder(BorderFactory.createTitledBorder("Output"));
 
-		// Modèle de données pour la liste
-		model = new DefaultListModel<>();
+		valueLabels = new HashMap<>();
 
-		// Création de la liste
-		JList<PropertyItem> list = new JList<>(model);
-		list.setCellRenderer(new PropertyListRenderer());
-		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		list.setBackground(UIManager.getColor("Panel.background"));
+		// Le panneau principal qui contiendra les catégories
+		JPanel contentPanel = new JPanel();
+		contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-		// Ajout de l'événement double-clic pour copier la valeur
-		list.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2) {
-					int index = list.locationToIndex(e.getPoint());
-					if (index >= 0) {
-						PropertyItem item = model.getElementAt(index);
+		// Création de l'arborescence UI une seule fois
+		contentPanel.add(createCategoryPanel("Identification", new String[] {
+				"Object name", "NORAD ID", "COSPAR ID", "EPOCH", "TLE AGE"
+		}));
+		contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
-						// Copie dans le presse-papiers du système
-						StringSelection stringSelection = new StringSelection(item.value);
-						Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-						clipboard.setContents(stringSelection, null);
-					}
-				}
-			}
-		});
+		contentPanel.add(createCategoryPanel("Paramètres Orbitaux (TLE)", new String[] {
+				"(MEAN MOTION)'", "(MEAN MOTION)''", "INCLINATION", "LONGITUDE OF ASC. NODE",
+				"LONGITUDE OF PERIAPSIS", "ECCENTRICITY", "ARG. OF PERIAPSIS", "MEAN ANOMALY", "MEAN MOTION"
+		}));
+		contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
-		JScrollPane scrollPane = new JScrollPane(list);
+		contentPanel.add(createCategoryPanel("Résultats Initiaux", new String[] {
+				"ORBITAL PERIOD", "SEMI MAJOR AXIS", "ALTITUDE AT APOGEE",
+				"ALTITUDE AT PERIGEE", "ALTITUDE AT EPOCH", "SPEED @ AP", "SPEED @ PE", "SPEED @ EPOCH"
+		}));
+		contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+		contentPanel.add(createCategoryPanel("Actuellement (Temps Réel)", new String[] {
+				"DATE", "X Coord", "Y Coord", "Z Coord", "GROUND COORDINATES", "ALTITUDE", "VELOCITY"
+		}));
+
+		JScrollPane scrollPane = new JScrollPane(contentPanel);
 		scrollPane.setBorder(null);
 		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
 		this.add(scrollPane, BorderLayout.CENTER);
 	}
 
-	// --- CLASSE DE DONNÉES ---
-	private static class PropertyItem {
-		String key;
-		String value;
+	private JPanel createCategoryPanel(String title, String[] keys) {
+		JPanel panel = new JPanel(new GridBagLayout());
+		panel.setBorder(BorderFactory.createTitledBorder(
+				BorderFactory.createLineBorder(UIManager.getColor("Component.borderColor"), 1),
+				title, TitledBorder.LEFT, TitledBorder.TOP,
+				new Font(Font.SANS_SERIF, Font.BOLD, 12), UIManager.getColor("Label.foreground")));
 
-		public PropertyItem(String key, String value) {
-			this.key = key;
-			this.value = value;
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.insets = new Insets(4, 5, 4, 15);
+
+		for (int i = 0; i < keys.length; i++) {
+			String key = keys[i];
+
+			// Label de la propriété (gauche, gris)
+			JLabel keyLabel = new JLabel(key);
+			keyLabel.setForeground(Color.GRAY);
+			keyLabel.setFont(keyLabel.getFont().deriveFont(11f));
+			gbc.gridx = 0;
+			gbc.gridy = i;
+			gbc.weightx = 0.0;
+			panel.add(keyLabel, gbc);
+
+			// Label de la valeur (droite, blanc/clair)
+			JLabel valueLabel = new JLabel("-"); // Valeur par défaut avant décodage
+			valueLabel.setFont(valueLabel.getFont().deriveFont(Font.BOLD, 12f));
+			valueLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+			valueLabel.setToolTipText("Double-cliquez pour copier");
+
+			// Événement de copie au double-clic
+			valueLabel.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					if (e.getClickCount() == 2 && !valueLabel.getText().equals("-")) {
+						StringSelection stringSelection = new StringSelection(valueLabel.getText());
+						Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+						clipboard.setContents(stringSelection, null);
+					}
+				}
+			});
+
+			// On stocke la référence du label pour le mettre à jour plus tard très
+			// rapidement
+			valueLabels.put(key, valueLabel);
+
+			gbc.gridx = 1;
+			gbc.gridy = i;
+			gbc.weightx = 1.0;
+			panel.add(valueLabel, gbc);
 		}
-
-		public void setValue(String val) { value = val; }
+		return panel;
 	}
 
-	// --- LE RENDU PERSONNALISÉ POUR CHAQUE CELLULE ---
-	private static class PropertyListRenderer extends JPanel implements ListCellRenderer<PropertyItem> {
-		private JLabel keyLabel;
-		private JLabel valueLabel;
-
-		public PropertyListRenderer() {
-			this.setLayout(new GridLayout(2, 1, 0, 2));
-			this.setBorder(BorderFactory.createCompoundBorder(
-					BorderFactory.createMatteBorder(0, 0, 1, 0, UIManager.getColor("Component.borderColor")),
-					new EmptyBorder(8, 10, 8, 10)));
-
-			keyLabel = new JLabel();
-			keyLabel.setFont(keyLabel.getFont().deriveFont(10f));
-			keyLabel.setForeground(Color.GRAY);
-
-			valueLabel = new JLabel();
-			valueLabel.setFont(valueLabel.getFont().deriveFont(Font.BOLD, 13f));
-
-			this.add(keyLabel);
-			this.add(valueLabel);
+	// Met à jour le texte du label s'il existe
+	private void updateLabel(String key, String value) {
+		JLabel label = valueLabels.get(key);
+		if (label != null) {
+			label.setText(value);
 		}
+	}
 
-		@Override
-		public Component getListCellRendererComponent(JList<? extends PropertyItem> list, PropertyItem item, int index,
-				boolean isSelected, boolean cellHasFocus) {
-			keyLabel.setText(item.key.toUpperCase());
-			valueLabel.setText(item.value);
+	public void showData(TLE tle, StaticValues init, DynamicValues instant, long currentTimestamp) {
+		String epochString = TimeUtils.timestampToDateString(init.epochTimestamp());
+		String periodString = TimeUtils.periodToString(init.T());
+		String instantString = TimeUtils.timestampToDateString(currentTimestamp);
+		String ageString = TimeUtils.deltaTimeToString(instant.deltaTime());
 
-			if (isSelected) {
-				this.setBackground(UIManager.getColor("List.selectionBackground"));
-				valueLabel.setForeground(UIManager.getColor("List.selectionForeground"));
-			} else {
-				this.setBackground(list.getBackground());
-				valueLabel.setForeground(list.getForeground());
-			}
-			return this;
-		}
+		// Identification
+		updateLabel("Object name", tle.name());
+		updateLabel("NORAD ID", String.format("%d%c", tle.noradId(), tle.classification()));
+		updateLabel("COSPAR ID",
+				String.format("%d %03d %s", tle.cosparYear(), tle.cosparLaunchNum(), tle.cosparPiece()));
+		updateLabel("EPOCH", epochString);
+		updateLabel("TLE AGE", ageString);
+
+		// Paramètres Orbitaux
+		updateLabel("(MEAN MOTION)'", String.format("%.4e", tle.firstDerivMeanMotion()));
+		updateLabel("(MEAN MOTION)''", String.format("%.4e", tle.secondDerivMeanMotion()));
+		updateLabel("INCLINATION", String.format("%.4f degs", tle.inclination()));
+		updateLabel("LONGITUDE OF ASC. NODE", String.format("%.4f degs", tle.rightAscension()));
+		updateLabel("LONGITUDE OF PERIAPSIS",
+				String.format("%.4f degs", tle.rightAscension() + tle.argumentOfPerigee()));
+		updateLabel("ECCENTRICITY", String.format("%.7f", tle.eccentricity()));
+		updateLabel("ARG. OF PERIAPSIS", String.format("%.4f degs", tle.argumentOfPerigee()));
+		updateLabel("MEAN ANOMALY", String.format("%.4f degs", tle.meanAnomaly()));
+		updateLabel("MEAN MOTION", String.format("%.8f rev/day", tle.meanMotion()));
+
+		// Résultats
+		updateLabel("ORBITAL PERIOD", String.format("%.4f secs (%s)", init.T(), periodString));
+		updateLabel("SEMI MAJOR AXIS", String.format("%.0f m", init.a()));
+		updateLabel("ALTITUDE AT APOGEE", String.format("%.4f m", init.apoAlt()));
+		updateLabel("ALTITUDE AT PERIGEE", String.format("%.4f m", init.periAlt()));
+		updateLabel("ALTITUDE AT EPOCH", String.format("%.4f m", init.epochAlt()));
+		updateLabel("SPEED @ AP", String.format("%.4f m/s", init.apoSpd()));
+		updateLabel("SPEED @ PE", String.format("%.4f m/s", init.periSpd()));
+		updateLabel("SPEED @ EPOCH", String.format("%.4f m/s", init.epochSpd()));
+
+		// Temps Réel
+		updateLabel("DATE", instantString);
+		updateLabel("X Coord", String.format("%.2f m", instant.coords3d().x()));
+		updateLabel("Y Coord", String.format("%.2f m", instant.coords3d().y()));
+		updateLabel("Z Coord", String.format("%.2f m", instant.coords3d().z()));
+		updateLabel("GROUND COORDINATES",
+				String.format("%.5f, %.5f", instant.geoCoords().lat(), instant.geoCoords().lng()));
+		updateLabel("ALTITUDE", String.format("%.0f m", instant.geoCoords().altitude()));
+		updateLabel("VELOCITY", String.format("%.2f m/s", instant.speed()));
 	}
 }
