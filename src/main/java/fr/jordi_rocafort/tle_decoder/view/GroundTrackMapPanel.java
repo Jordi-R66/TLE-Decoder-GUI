@@ -6,135 +6,159 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.ArrayList;
 
 public class GroundTrackMapPanel extends JPanel {
 
-	private static GroundTrackMapPanel instance;
-	private GeoCoords currentPosition;
+    private static GroundTrackMapPanel instance;
+    private GeoCoords currentPosition;
+    
+    // Historique et futur
+    private final LinkedList<GeoCoords> trackHistory = new LinkedList<>();
+    private List<GeoCoords> futureTrack = new ArrayList<>();
+    private static final int MAX_HISTORY = 300; 
 
-	// Historique pour dessiner la trace du satellite (limité à N points)
-	private final LinkedList<GeoCoords> trackHistory = new LinkedList<>();
-	private static final int MAX_HISTORY = 300;
+    public static GroundTrackMapPanel getInstance() {
+        if (instance == null) {
+            instance = new GroundTrackMapPanel();
+        }
+        return instance;
+    }
 
-	public static GroundTrackMapPanel getInstance() {
-		if (instance == null) {
-			instance = new GroundTrackMapPanel();
-		}
-		return instance;
-	}
+    private GroundTrackMapPanel() {
+        this.setBackground(Color.BLACK); // Fond global noir pour les bandes
+        this.setBorder(BorderFactory.createTitledBorder("Trace au sol 2D (Projection Équirectangulaire)"));
+    }
 
-	private GroundTrackMapPanel() {
-		this.setBackground(new Color(20, 24, 32)); // Fond sombre "espace/radar"
-		this.setBorder(BorderFactory.createTitledBorder("Trace au sol 2D (Projection Équirectangulaire)"));
-	}
+    public void updatePosition(GeoCoords geoCoords) {
+        this.currentPosition = geoCoords;
+        trackHistory.add(geoCoords);
+        if (trackHistory.size() > MAX_HISTORY) {
+            trackHistory.removeFirst();
+        }
+        this.repaint();
+    }
 
-	/**
-	 * Met à jour la position et redessine le panneau
-	 */
-	public void updatePosition(GeoCoords geoCoords) {
-		this.currentPosition = geoCoords;
+    public void setFutureTrack(List<GeoCoords> futureTrack) {
+        this.futureTrack = futureTrack;
+        this.repaint();
+    }
 
-		trackHistory.add(geoCoords);
-		if (trackHistory.size() > MAX_HISTORY) {
-			trackHistory.removeFirst();
-		}
+    public void clearTrack() {
+        trackHistory.clear();
+        futureTrack.clear();
+        currentPosition = null;
+        this.repaint();
+    }
 
-		// Demande à Swing de redessiner ce composant
-		this.repaint();
-	}
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-	/**
-	 * Réinitialise la trace (utile quand on change de satellite)
-	 */
-	public void clearTrack() {
-		trackHistory.clear();
-		currentPosition = null;
-		this.repaint();
-	}
+        int panelWidth = getWidth();
+        int panelHeight = getHeight();
 
-	@Override
-	protected void paintComponent(Graphics g) {
-		super.paintComponent(g);
-		Graphics2D g2d = (Graphics2D) g;
+        // 1. Calcul de la zone de dessin (Ratio strict 2:1)
+        int drawWidth, drawHeight, offsetX, offsetY;
+        
+        if (panelWidth > panelHeight * 2) {
+            // Le panel est trop large -> Bandes noires sur les côtés
+            drawHeight = panelHeight;
+            drawWidth = panelHeight * 2;
+            offsetX = (panelWidth - drawWidth) / 2;
+            offsetY = 0;
+        } else {
+            // Le panel est trop haut -> Bandes noires en haut et en bas
+            drawWidth = panelWidth;
+            drawHeight = panelWidth / 2;
+            offsetX = 0;
+            offsetY = (panelHeight - drawHeight) / 2;
+        }
 
-		// Antialiasing pour un rendu plus lisse
-		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        // 2. Dessin du fond de la carte
+        g2d.setColor(new Color(20, 24, 32)); // Fond sombre "espace/radar"
+        g2d.fillRect(offsetX, offsetY, drawWidth, drawHeight);
 
-		int width = getWidth();
-		int height = getHeight();
+        // 3. Dessin de la grille
+        g2d.setColor(new Color(40, 50, 65));
+        for (int lon = -180; lon <= 180; lon += 30) {
+            int x = lngToX(lon, drawWidth, offsetX);
+            g2d.drawLine(x, offsetY, x, offsetY + drawHeight);
+        }
+        for (int lat = -90; lat <= 90; lat += 30) {
+            int y = latToY(lat, drawHeight, offsetY);
+            g2d.drawLine(offsetX, y, offsetX + drawWidth, y);
+        }
+        
+        g2d.setColor(new Color(80, 90, 110));
+        g2d.drawLine(offsetX, offsetY + drawHeight / 2, offsetX + drawWidth, offsetY + drawHeight / 2); // Équateur
+        g2d.drawLine(offsetX + drawWidth / 2, offsetY, offsetX + drawWidth / 2, offsetY + drawHeight);  // Greenwich
 
-		// 1. Dessin d'une grille de fond (Méridiens et Parallèles)
-		g2d.setColor(new Color(40, 50, 65));
-		for (int lon = -180; lon <= 180; lon += 30) {
-			int x = lngToX(lon, width);
-			g2d.drawLine(x, 0, x, height);
-		}
-		for (int lat = -90; lat <= 90; lat += 30) {
-			int y = latToY(lat, height);
-			g2d.drawLine(0, y, width, y);
-		}
+        // 4. Dessin de la trace FUTURE (En pointillés blancs/gris)
+        if (futureTrack != null && !futureTrack.isEmpty()) {
+            g2d.setColor(new Color(255, 255, 255, 120));
+            // Style pointillé
+            g2d.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{5}, 0));
+            drawTrack(g2d, futureTrack, drawWidth, drawHeight, offsetX, offsetY);
+        }
 
-		// Équateur et Méridien de Greenwich en plus clair
-		g2d.setColor(new Color(80, 90, 110));
-		g2d.drawLine(0, height / 2, width, height / 2); // Équateur
-		g2d.drawLine(width / 2, 0, width / 2, height); // Greenwich
+        // 5. Dessin de la trace HISTORIQUE (Ligne continue bleue)
+        if (trackHistory.size() > 1) {
+            g2d.setColor(new Color(100, 200, 255, 180));
+            g2d.setStroke(new BasicStroke(2.0f));
+            drawTrack(g2d, trackHistory, drawWidth, drawHeight, offsetX, offsetY);
+        }
 
-		// 2. Dessin de la trace historique (ligne continue)
-		if (trackHistory.size() > 1) {
-			g2d.setColor(new Color(100, 200, 255, 150)); // Bleu clair semi-transparent
-			g2d.setStroke(new BasicStroke(2.0f));
+        // 6. Dessin du satellite (point actuel)
+        if (currentPosition != null) {
+            int currentX = lngToX(currentPosition.lng(), drawWidth, offsetX);
+            int currentY = latToY(currentPosition.lat(), drawHeight, offsetY);
 
-			Path2D path = new Path2D.Double();
-			boolean first = true;
-			GeoCoords prev = null;
+            g2d.setColor(new Color(255, 50, 50, 100));
+            g2d.fillOval(currentX - 10, currentY - 10, 20, 20);
+            
+            g2d.setColor(Color.RED);
+            g2d.fillOval(currentX - 4, currentY - 4, 8, 8);
+        }
+    }
 
-			for (GeoCoords pos : trackHistory) {
-				int x = lngToX(pos.lng(), width);
-				int y = latToY(pos.lat(), height);
+    /**
+     * Méthode utilitaire pour dessiner une trajectoire en gérant la césure du Pacifique (-180 à +180)
+     */
+    private void drawTrack(Graphics2D g2d, Iterable<GeoCoords> track, int drawWidth, int drawHeight, int offsetX, int offsetY) {
+        Path2D path = new Path2D.Double();
+        boolean first = true;
+        GeoCoords prev = null;
+        
+        for (GeoCoords pos : track) {
+            int x = lngToX(pos.lng(), drawWidth, offsetX);
+            int y = latToY(pos.lat(), drawHeight, offsetY);
+            
+            if (first) {
+                path.moveTo(x, y);
+                first = false;
+            } else {
+                if (Math.abs(pos.lng() - prev.lng()) > 180) {
+                    path.moveTo(x, y); // Casse la ligne pour éviter un trait horizontal sur toute la carte
+                } else {
+                    path.lineTo(x, y);
+                }
+            }
+            prev = pos;
+        }
+        g2d.draw(path);
+    }
 
-				if (first) {
-					path.moveTo(x, y);
-					first = false;
-				} else {
-					// Gestion du passage "pacifique" (quand on passe de +180 à -180 de longitude)
-					// Si le saut est trop grand (ex: > 180 degrés), on coupe la ligne pour éviter
-					// un trait horizontal
-					if (Math.abs(pos.lng() - prev.lng()) > 180) {
-						path.moveTo(x, y);
-					} else {
-						path.lineTo(x, y);
-					}
-				}
-				prev = pos;
-			}
-			g2d.draw(path);
-		}
+    // --- Conversions Mathématiques ---
+    
+    private int lngToX(double lng, int drawWidth, int offsetX) {
+        return offsetX + (int) ((lng + 180.0) / 360.0 * drawWidth);
+    }
 
-		// 3. Dessin du satellite (point actuel)
-		if (currentPosition != null) {
-			int currentX = lngToX(currentPosition.lng(), width);
-			int currentY = latToY(currentPosition.lat(), height);
-
-			// Halo rouge
-			g2d.setColor(new Color(255, 50, 50, 100));
-			g2d.fillOval(currentX - 10, currentY - 10, 20, 20);
-
-			// Centre rouge vif
-			g2d.setColor(Color.RED);
-			g2d.fillOval(currentX - 4, currentY - 4, 8, 8);
-		}
-	}
-
-	// --- Méthodes de conversion Mathématiques ---
-
-	private int lngToX(double lng, int width) {
-		// La longitude va de -180 à 180
-		return (int) ((lng + 180.0) / 360.0 * width);
-	}
-
-	private int latToY(double lat, int height) {
-		// La latitude va de -90 (Sud) à 90 (Nord).
-		// L'axe Y des écrans va vers le bas, on doit donc inverser.
-		return (int) ((90.0 - lat) / 180.0 * height);
-	}
+    private int latToY(double lat, int drawHeight, int offsetY) {
+        return offsetY + (int) ((90.0 - lat) / 180.0 * drawHeight);
+    }
 }
