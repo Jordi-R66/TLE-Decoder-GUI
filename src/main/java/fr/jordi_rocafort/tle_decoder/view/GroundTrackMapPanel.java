@@ -2,9 +2,12 @@ package fr.jordi_rocafort.tle_decoder.view;
 
 import fr.jordi_rocafort.tle_decoder.model.data.GeoCoords;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
+import java.awt.image.BufferedImage;
+import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
@@ -19,6 +22,9 @@ public class GroundTrackMapPanel extends JPanel {
     private List<GeoCoords> futureTrack = new ArrayList<>();
     private static final int MAX_HISTORY = 300;
 
+    // L'image de la carte du monde
+    private BufferedImage mapImage;
+
     public static GroundTrackMapPanel getInstance() {
         if (instance == null) {
             instance = new GroundTrackMapPanel();
@@ -27,8 +33,20 @@ public class GroundTrackMapPanel extends JPanel {
     }
 
     private GroundTrackMapPanel() {
-        this.setBackground(Color.BLACK); // Fond global noir pour les bandes
+        this.setBackground(Color.BLACK);
         this.setBorder(BorderFactory.createTitledBorder("Ground Track (Projection Équirectangulaire)"));
+
+        // Chargement de l'image de fond
+        try {
+            InputStream is = getClass().getResourceAsStream("/world_map.jpg");
+            if (is != null) {
+                mapImage = ImageIO.read(is);
+            } else {
+                System.err.println("Avertissement : Image /world_map.jpg introuvable. Rendu de secours activé.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void updatePosition(GeoCoords geoCoords) {
@@ -65,13 +83,11 @@ public class GroundTrackMapPanel extends JPanel {
         int drawWidth, drawHeight, offsetX, offsetY;
 
         if (panelWidth > panelHeight * 2) {
-            // Le panel est trop large -> Bandes noires sur les côtés
             drawHeight = panelHeight;
             drawWidth = panelHeight * 2;
             offsetX = (panelWidth - drawWidth) / 2;
             offsetY = 0;
         } else {
-            // Le panel est trop haut -> Bandes noires en haut et en bas
             drawWidth = panelWidth;
             drawHeight = panelWidth / 2;
             offsetX = 0;
@@ -79,27 +95,32 @@ public class GroundTrackMapPanel extends JPanel {
         }
 
         // 2. Dessin du fond de la carte
-        g2d.setColor(new Color(20, 24, 32));
-        g2d.fillRect(offsetX, offsetY, drawWidth, drawHeight);
+        if (mapImage != null) {
+            g2d.drawImage(mapImage, offsetX, offsetY, drawWidth, drawHeight, null);
+        } else {
+            g2d.setColor(new Color(20, 24, 32));
+            g2d.fillRect(offsetX, offsetY, drawWidth, drawHeight);
+        }
 
-        // 3. Dessin de la grille
-        g2d.setColor(new Color(40, 50, 65));
+        // 3. Dessin de la grille (Rendue plus discrète pour ne pas masquer la carte)
+        g2d.setColor(new Color(255, 255, 255, 30)); // Blanc très transparent
         for (int lon = -180; lon <= 180; lon += 30) {
             int x = lngToX(lon, drawWidth, offsetX);
             g2d.drawLine(x, offsetY, x, offsetY + drawHeight);
         }
+
         for (int lat = -90; lat <= 90; lat += 30) {
             int y = latToY(lat, drawHeight, offsetY);
             g2d.drawLine(offsetX, y, offsetX + drawWidth, y);
         }
 
-        g2d.setColor(new Color(80, 90, 110));
-        g2d.drawLine(offsetX, offsetY + drawHeight / 2, offsetX + drawWidth, offsetY + drawHeight / 2); // Équateur
-        g2d.drawLine(offsetX + drawWidth / 2, offsetY, offsetX + drawWidth / 2, offsetY + drawHeight); // Greenwich
+        g2d.setColor(new Color(255, 255, 255, 60)); // Équateur et Greenwich légèrement plus visibles
+        g2d.drawLine(offsetX, offsetY + drawHeight / 2, offsetX + drawWidth, offsetY + drawHeight / 2);
+        g2d.drawLine(offsetX + drawWidth / 2, offsetY, offsetX + drawWidth / 2, offsetY + drawHeight);
 
         // 4. Dessin de la trace FUTURE (En pointillés)
         if (futureTrack != null && !futureTrack.isEmpty()) {
-            g2d.setColor(new Color(255, 255, 255, 120));
+            g2d.setColor(new Color(255, 255, 255, 160));
             g2d.setStroke(
                     new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[] { 5 }, 0));
             drawTrack(g2d, futureTrack, drawWidth, drawHeight, offsetX, offsetY);
@@ -107,7 +128,7 @@ public class GroundTrackMapPanel extends JPanel {
 
         // 5. Dessin de la trace HISTORIQUE (Ligne continue)
         if (trackHistory.size() > 1) {
-            g2d.setColor(new Color(100, 200, 255, 180));
+            g2d.setColor(new Color(100, 200, 255, 200));
             g2d.setStroke(new BasicStroke(2.0f));
             drawTrack(g2d, trackHistory, drawWidth, drawHeight, offsetX, offsetY);
         }
