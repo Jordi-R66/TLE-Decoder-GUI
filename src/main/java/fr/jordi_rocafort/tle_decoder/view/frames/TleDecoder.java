@@ -26,7 +26,19 @@ public class TleDecoder extends JFrame {
 
 		// Placement : DataPanel fixe à gauche, le reste prend tout l'espace central
 		this.add(dataPanel, BorderLayout.WEST);
-		this.add(GroundTrackMapPanel.getInstance(), BorderLayout.CENTER);
+		// Création d'un séparateur pour diviser la partie droite en haut/bas
+		JSplitPane rightSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+		rightSplitPane.setTopComponent(GroundTrackMapPanel.getInstance());
+		rightSplitPane.setBottomComponent(Orbit2DPanel.getInstance());
+
+		// Donne 55% de l'espace à la carte au sol par défaut
+		rightSplitPane.setResizeWeight(0.55);
+		rightSplitPane.setContinuousLayout(true);
+		rightSplitPane.setDividerSize(6);
+
+		// On place ce panneau divisé au centre (qui prend tout l'espace restant à
+		// droite du DataPanel)
+		this.add(rightSplitPane, BorderLayout.CENTER);
 
 		this.addWindowListener(new WindowAdapter() {
 			@Override

@@ -9,6 +9,7 @@ import fr.jordi_rocafort.tle_decoder.model.data.TLE;
 import fr.jordi_rocafort.tle_decoder.model.physics.OrbitPropagator;
 import fr.jordi_rocafort.tle_decoder.view.OutputPanel;
 import fr.jordi_rocafort.tle_decoder.view.GroundTrackMapPanel;
+import fr.jordi_rocafort.tle_decoder.view.Orbit2DPanel;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -16,7 +17,10 @@ import java.util.List;
 
 public class SimulationEngine {
 	private Thread simulationThread;
-	private boolean isRunning = false;
+
+	// Le mot-clé "volatile" garantit que le Thread lira toujours la vraie valeur
+	// et ne la mettra pas en cache de son côté.
+	private volatile boolean isRunning = false;
 
 	private TLE currentTle;
 	private StaticValues currentInit;
@@ -25,14 +29,18 @@ public class SimulationEngine {
 		this.currentTle = tle;
 		this.currentInit = init;
 
+		// Arrête proprement et tue l'ancien calcul s'il existe
 		stopSimulation();
 
-		// Nettoyage de l'ancienne carte
-		SwingUtilities.invokeLater(() -> GroundTrackMapPanel.getInstance().clearTrack());
+		// Nettoyage des anciennes vues
+		SwingUtilities.invokeLater(() -> {
+			GroundTrackMapPanel.getInstance().clearTrack();
+			Orbit2DPanel.getInstance().clear();
+		});
 
 		isRunning = true;
 		simulationThread = new Thread(() -> {
-			long lastFutureTrackUpdate = 0; // Permet de ne pas recalculer la trace future à chaque frame
+			long lastFutureTrackUpdate = 0;
 
 			while (isRunning) {
 				long currentTimestamp = Instant.now().getEpochSecond();
@@ -42,7 +50,7 @@ public class SimulationEngine {
 
 				// 2. Mise à jour de la TRACE FUTURE (Toutes les 10 secondes)
 				if (currentTimestamp - lastFutureTrackUpdate >= 10) {
-					long duration = (long) (currentInit.T() * 1.5); // 1.5 orbite dans le futur
+					long duration = (long) 12 * 3600;
 					long endTs = currentTimestamp + duration;
 					long step = 60L;
 
@@ -63,13 +71,14 @@ public class SimulationEngine {
 				SwingUtilities.invokeLater(() -> {
 					OutputPanel.getInstance().showData(currentTle, currentInit, instant, currentTimestamp);
 					GroundTrackMapPanel.getInstance().updatePosition(instant.geoCoords());
+					Orbit2DPanel.getInstance().updateData(currentTle, currentInit, instant.coords2d());
 				});
 
-				// 4. Pause (~60 FPS)
 				try {
-					Thread.sleep(16);
+					Thread.sleep(100);
 				} catch (InterruptedException e) {
 					Thread.currentThread().interrupt();
+					break;
 				}
 			}
 		});
@@ -78,9 +87,9 @@ public class SimulationEngine {
 	}
 
 	public void stopSimulation() {
-		isRunning = false;
-		if (simulationThread != null) {
-			simulationThread.interrupt();
+		isRunning = false; // Avec "volatile", le thread le verra instantanément
+		if (simulationThread != null && simulationThread.isAlive()) {
+			simulationThread.interrupt(); // Réveille le thread s'il est en train de dormir
 		}
 	}
 }
