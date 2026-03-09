@@ -1,6 +1,6 @@
 package fr.jordi_rocafort.tle_decoder.view;
 
-import fr.jordi_rocafort.tle_decoder.model.data.GeoCoords;
+import fr.jordi_rocafort.tle_decoder.model.data.Coords3D;
 import fr.jordi_rocafort.tle_decoder.model.physics.Constants;
 
 import javax.swing.*;
@@ -17,9 +17,11 @@ import org.jogamp.java3d.utils.image.TextureLoader;
 public class Orbit3DPanel extends JPanel {
 	private static Orbit3DPanel instance;
 	private SimpleUniverse universe;
+
+	private TransformGroup earthRotGroup;
 	private TransformGroup satTransformGroup;
-	private TransformGroup viewTransform; // Pour contrôler la caméra
-	private Shape3D trackShape; // Pour le tracé de l'orbite
+	private TransformGroup viewTransform;
+	private Shape3D trackShape;
 
 	private static final double SCALE = 1.0 / Constants.WGS84_A;
 
@@ -32,7 +34,7 @@ public class Orbit3DPanel extends JPanel {
 
 	private Orbit3DPanel() {
 		this.setLayout(new BorderLayout());
-		this.setBorder(BorderFactory.createTitledBorder("Vue 3D Globale (Tracking Auto)"));
+		this.setBorder(BorderFactory.createTitledBorder("Vue 3D Globale (ECI - Anneau fixe & Terre en rotation)"));
 
 		GraphicsConfiguration config = SimpleUniverse.getPreferredConfiguration();
 		Canvas3D canvas = new Canvas3D(config);
@@ -56,6 +58,16 @@ public class Orbit3DPanel extends JPanel {
 		if (textureUrl != null) {
 			TextureLoader loader = new TextureLoader(textureUrl, null);
 			earthAppearance.setTexture(loader.getTexture());
+
+			// CORRECTION 1 : Renverser la texture (Flip Vertical) pour mettre le Pôle Nord
+			// en haut (+Y)
+			TextureAttributes texAttr = new TextureAttributes();
+			Transform3D texTransform = new Transform3D();
+			texTransform.setScale(new Vector3d(1.0, -1.0, 1.0)); // Inverse l'axe V
+			texTransform.setTranslation(new Vector3d(0.0, 1.0, 0.0)); // Recadre l'image entre 0 et 1
+			texAttr.setTextureTransform(texTransform);
+			earthAppearance.setTextureAttributes(texAttr);
+
 			Material material = new Material();
 			material.setLightingEnable(true);
 			earthAppearance.setMaterial(material);
@@ -66,13 +78,15 @@ public class Orbit3DPanel extends JPanel {
 
 		double flattening = 1.0 / 298.257223563;
 		double polarRatio = 1.0 - flattening;
+		Transform3D earthScaleT3d = new Transform3D();
+		earthScaleT3d.setScale(new Vector3d(1.0, polarRatio, 1.0));
+		TransformGroup earthScaleGroup = new TransformGroup(earthScaleT3d);
+		earthScaleGroup.addChild(earthSphere);
 
-		Transform3D earthTransform = new Transform3D();
-		earthTransform.setScale(new Vector3d(1.0, polarRatio, 1.0));
-
-		TransformGroup earthTg = new TransformGroup(earthTransform);
-		earthTg.addChild(earthSphere);
-		root.addChild(earthTg);
+		earthRotGroup = new TransformGroup();
+		earthRotGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+		earthRotGroup.addChild(earthScaleGroup);
+		root.addChild(earthRotGroup);
 
 		// 2. --- LE SATELLITE ---
 		satTransformGroup = new TransformGroup();
@@ -86,16 +100,16 @@ public class Orbit3DPanel extends JPanel {
 		satTransformGroup.addChild(satSphere);
 		root.addChild(satTransformGroup);
 
-		// 3. --- LE TRACÉ DE L'ORBITE 3D ---
+		// 3. --- LE TRACÉ DE L'ORBITE ---
 		trackShape = new Shape3D();
-		trackShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE); // Permet de modifier la ligne en temps réel
+		trackShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
 
 		Appearance trackApp = new Appearance();
 		ColoringAttributes trackColor = new ColoringAttributes(new Color3f(1.0f, 1.0f, 1.0f),
 				ColoringAttributes.FASTEST);
 		trackApp.setColoringAttributes(trackColor);
 		LineAttributes lineAttr = new LineAttributes();
-		lineAttr.setLineWidth(2.0f); // Épaisseur de la ligne
+		lineAttr.setLineWidth(2.0f);
 		lineAttr.setLineAntialiasingEnable(true);
 		trackApp.setLineAttributes(lineAttr);
 
@@ -116,69 +130,63 @@ public class Orbit3DPanel extends JPanel {
 		return root;
 	}
 
-	public void updatePosition(GeoCoords geoCoords) {
-		if (satTransformGroup == null || geoCoords == null)
+	public void updatePosition(Coords3D eciCoords, long timestamp) {
+		if (satTransformGroup == null || eciCoords == null)
 			return;
 
-		double latRad = Math.toRadians(geoCoords.lat());
-		double lonRad = Math.toRadians(geoCoords.lng());
-		double r = (Constants.WGS84_A + geoCoords.altitude()) * SCALE;
+		double x = eciCoords.x() * SCALE;
+		double y = eciCoords.z() * SCALE;
+		double z = -eciCoords.y() * SCALE;
 
-		double x = r * Math.cos(latRad) * Math.sin(lonRad);
-		double y = r * Math.sin(latRad);
-		double z = r * Math.cos(latRad) * Math.cos(lonRad);
-
-		// Mise à jour de la sphère rouge
 		Vector3d satPosition = new Vector3d(x, y, z);
 		Transform3D t3dSat = new Transform3D();
 		t3dSat.setTranslation(satPosition);
 		satTransformGroup.setTransform(t3dSat);
 
-		// --- CAMERA CINÉMATIQUE ---
-		// La caméra est placée derrière le satellite (1.5 fois la distance de l'orbite)
-		Point3d camPos = new Point3d(x * 1.5, y * 1.5, z * 1.5);
+		// Recul de la caméra à 1.5x l'altitude
+		double distMultiplier = 1.5;
+		Point3d camPos = new Point3d(x * distMultiplier, y * distMultiplier, z * distMultiplier);
 
-		// Protection contre le "Gimbal Lock" si le satellite passe exactement au-dessus
-		// des pôles (Axe Y)
 		Vector3d upVector = new Vector3d(0, 1, 0);
-		if (Math.abs(y / r) > 0.98) {
+		if (Math.abs(y / Math.sqrt(x * x + y * y + z * z)) > 0.98) {
 			upVector = new Vector3d(1, 0, 0);
 		}
 
 		Transform3D cameraT3D = new Transform3D();
-		cameraT3D.lookAt(camPos, new Point3d(0, 0, 0), upVector); // Regarde vers la Terre (0,0,0)
-		cameraT3D.invert(); // Java3D exige d'inverser la matrice pour le ViewPlatform
+		cameraT3D.lookAt(camPos, new Point3d(0, 0, 0), upVector);
+		cameraT3D.invert();
 		viewTransform.setTransform(cameraT3D);
+
+		double jd = (timestamp / 86400.0) + 2440587.5;
+		double t = (jd - 2451545.0) / 36525.0;
+		double gmstDeg = 280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * t * t;
+		double gmstRad = Math.toRadians(gmstDeg % 360.0);
+
+		// CORRECTION 2 : Décalage de +90° (PI/2) pour aligner Greenwich sur l'axe X
+		// (Point Vernal)
+		Transform3D rotY = new Transform3D();
+		rotY.rotY(gmstRad + Math.PI / 2.0);
+		if (earthRotGroup != null)
+			earthRotGroup.setTransform(rotY);
 	}
 
-	/**
-	 * Dessine la ligne de l'orbite complète autour de la Terre
-	 */
-	public void setFutureTrack(List<GeoCoords> futureTrack) {
-		if (futureTrack == null || futureTrack.isEmpty() || trackShape == null)
+	public void setFutureTrack(List<Coords3D> track3D) {
+		if (track3D == null || track3D.isEmpty() || trackShape == null)
 			return;
 
-		int numPoints = futureTrack.size();
+		int numPoints = track3D.size();
 		Point3f[] points = new Point3f[numPoints];
 
 		for (int i = 0; i < numPoints; i++) {
-			GeoCoords geo = futureTrack.get(i);
-			double latRad = Math.toRadians(geo.lat());
-			double lonRad = Math.toRadians(geo.lng());
-			double r = (Constants.WGS84_A + geo.altitude()) * SCALE;
-
-			double x = r * Math.cos(latRad) * Math.sin(lonRad);
-			double y = r * Math.sin(latRad);
-			double z = r * Math.cos(latRad) * Math.cos(lonRad);
-
+			Coords3D c = track3D.get(i);
+			double x = c.x() * SCALE;
+			double y = c.z() * SCALE;
+			double z = -c.y() * SCALE;
 			points[i] = new Point3f((float) x, (float) y, (float) z);
 		}
 
-		// Création de la ligne continue
 		LineStripArray lineArray = new LineStripArray(numPoints, GeometryArray.COORDINATES, new int[] { numPoints });
 		lineArray.setCoordinates(0, points);
-
-		// Application au composant 3D
 		trackShape.setGeometry(lineArray);
 	}
 }
