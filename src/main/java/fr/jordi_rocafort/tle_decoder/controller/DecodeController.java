@@ -31,6 +31,10 @@ public class DecodeController implements ActionListener {
 		this.inputPanel = InputPanel.getInstance();
 		this.simulationEngine = new SimulationEngine();
 
+		for (ActionListener al : this.inputPanel.getConfirmBtn().getActionListeners()) {
+			this.inputPanel.getConfirmBtn().removeActionListener(al);
+		}
+
 		// On attache ce contrôleur au bouton Confirmer
 		this.inputPanel.getConfirmBtn().addActionListener(this);
 	}
