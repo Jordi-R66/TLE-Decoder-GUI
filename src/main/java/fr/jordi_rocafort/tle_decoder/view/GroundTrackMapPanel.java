@@ -36,7 +36,7 @@ public class GroundTrackMapPanel extends JPanel {
 		this.setBorder(BorderFactory.createTitledBorder("Ground Track (Projection Équirectangulaire)"));
 
 		// Chargement de l'image de fond
-		mapImage = ResourceManager.getWorldMap();
+		mapImage = ResourceManager.getLowResWorldMap();
 	}
 
 	public void updatePosition(GeoCoords geoCoords) {

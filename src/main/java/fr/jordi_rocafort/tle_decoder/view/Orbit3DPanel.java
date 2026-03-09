@@ -55,9 +55,11 @@ public class Orbit3DPanel extends JPanel {
 
 		// 1. --- LA TERRE ---
 		Appearance earthAppearance = new Appearance();
-		BufferedImage textureImage = ResourceManager.getWorldMap();
-		if (textureImage != null) {
-			TextureLoader loader = new TextureLoader(textureImage, (String)null);
+
+		BufferedImage sharedMapImage = ResourceManager.getLowResWorldMap();
+
+		if (sharedMapImage != null) {
+			TextureLoader loader = new TextureLoader(sharedMapImage, (String) null);
 			earthAppearance.setTexture(loader.getTexture());
 
 			Material material = new Material();
@@ -87,7 +89,7 @@ public class Orbit3DPanel extends JPanel {
 		Appearance satApp = new Appearance();
 		ColoringAttributes ca = new ColoringAttributes(new Color3f(1.0f, 0.0f, 0.0f), ColoringAttributes.FASTEST);
 		satApp.setColoringAttributes(ca);
-		Sphere satSphere = new Sphere(0.02f, satApp);
+		Sphere satSphere = new Sphere(0.01f, satApp);
 
 		satTransformGroup.addChild(satSphere);
 		root.addChild(satTransformGroup);
