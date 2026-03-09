@@ -7,6 +7,8 @@ public record DynamicValues(
 		double eccAno, // Anomalie excentrique (rad)
 		double distanceToFocal, // Distance au centre de la Terre (m)
 		double speed, // Vitesse instantanée (m/s)
+		double localGravity, // Gravité locale (m/s²)
+		double lorentzFactor,
 
 		Coords2D coords2d, // Coordonnées dans le plan orbital
 		Coords3D coords3d, // Coordonnées géocentriques équatoriales (ECI)

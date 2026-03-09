@@ -87,8 +87,11 @@ public class OrbitPropagator {
 				currentPeriArg);
 		GeoCoords geoCoords = GeographyPhysics.getGeoCoords(coords3d, currentTimestamp);
 
+		double localGravity = OrbMaths.computeLocalGravity(r, geoCoords.lat());
+		double lorentzFactor = OrbMaths.computeLorentzFactor(spd);
+
 		output = new DynamicValues(
-				deltaTime, trueAno, currentM, E, r, spd,
+				deltaTime, trueAno, currentM, E, r, spd, localGravity, lorentzFactor,
 				coords2d, coords3d, geoCoords);
 
 		return output;
