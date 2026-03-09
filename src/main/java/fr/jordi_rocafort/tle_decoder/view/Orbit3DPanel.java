@@ -59,15 +59,6 @@ public class Orbit3DPanel extends JPanel {
 			TextureLoader loader = new TextureLoader(textureUrl, null);
 			earthAppearance.setTexture(loader.getTexture());
 
-			// CORRECTION 1 : Renverser la texture (Flip Vertical) pour mettre le Pôle Nord
-			// en haut (+Y)
-			TextureAttributes texAttr = new TextureAttributes();
-			Transform3D texTransform = new Transform3D();
-			texTransform.setScale(new Vector3d(1.0, -1.0, 1.0)); // Inverse l'axe V
-			texTransform.setTranslation(new Vector3d(0.0, 1.0, 0.0)); // Recadre l'image entre 0 et 1
-			texAttr.setTextureTransform(texTransform);
-			earthAppearance.setTextureAttributes(texAttr);
-
 			Material material = new Material();
 			material.setLightingEnable(true);
 			earthAppearance.setMaterial(material);
@@ -143,8 +134,8 @@ public class Orbit3DPanel extends JPanel {
 		t3dSat.setTranslation(satPosition);
 		satTransformGroup.setTransform(t3dSat);
 
-		// Recul de la caméra à 1.5x l'altitude
-		double distMultiplier = 1.5;
+		// Zoom de la caméra à 2.0
+		double distMultiplier = 2.0;
 		Point3d camPos = new Point3d(x * distMultiplier, y * distMultiplier, z * distMultiplier);
 
 		Vector3d upVector = new Vector3d(0, 1, 0);
@@ -162,8 +153,7 @@ public class Orbit3DPanel extends JPanel {
 		double gmstDeg = 280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * t * t;
 		double gmstRad = Math.toRadians(gmstDeg % 360.0);
 
-		// CORRECTION 2 : Décalage de +90° (PI/2) pour aligner Greenwich sur l'axe X
-		// (Point Vernal)
+		// LA CORRECTION FINALE : + 90 degrés (Math.PI / 2.0)
 		Transform3D rotY = new Transform3D();
 		rotY.rotY(gmstRad + Math.PI / 2.0);
 		if (earthRotGroup != null)
