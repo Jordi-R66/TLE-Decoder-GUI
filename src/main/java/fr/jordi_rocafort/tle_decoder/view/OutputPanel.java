@@ -153,7 +153,7 @@ public class OutputPanel extends JPanel {
 		updateLabel("INCLINATION", String.format("%.4f degs", tle.inclination()));
 		updateLabel("LONGITUDE OF ASC. NODE", String.format("%.4f degs", tle.rightAscension()));
 		updateLabel("LONGITUDE OF PERIAPSIS",
-				String.format("%.4f degs", tle.rightAscension() + tle.argumentOfPerigee()));
+				String.format("%.4f degs", (tle.rightAscension() + tle.argumentOfPerigee()) % 360.0));
 		updateLabel("ECCENTRICITY", String.format("%.7f", tle.eccentricity()));
 		updateLabel("ARG. OF PERIAPSIS", String.format("%.4f degs", tle.argumentOfPerigee()));
 		updateLabel("MEAN ANOMALY", String.format("%.4f degs", tle.meanAnomaly()));
