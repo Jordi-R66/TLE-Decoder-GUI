@@ -16,7 +16,7 @@ public class TleDecoder extends JFrame {
 		instance = this;
 		dataPanel = DataPanel.getInstance();
 
-		this.setSize(1100, 620);
+		this.setSize(1100, 650);
 		this.setLocationRelativeTo(null);
 		this.setLayout(new BorderLayout());
 

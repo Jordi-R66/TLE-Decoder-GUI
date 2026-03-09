@@ -38,11 +38,11 @@ public class GroundTrackMapPanel extends JPanel {
 
 		// Chargement de l'image de fond
 		try {
-			InputStream is = getClass().getResourceAsStream("/world_map.jpg");
+			InputStream is = getClass().getResourceAsStream("/world_map4k.jpg");
 			if (is != null) {
 				mapImage = ImageIO.read(is);
 			} else {
-				System.err.println("Avertissement : Image /world_map.jpg introuvable. Rendu de secours activé.");
+				System.err.println("Avertissement : Image /world_map2k.jpg introuvable. Rendu de secours activé.");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

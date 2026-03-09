@@ -54,7 +54,7 @@ public class Orbit3DPanel extends JPanel {
 
 		// 1. --- LA TERRE ---
 		Appearance earthAppearance = new Appearance();
-		URL textureUrl = getClass().getResource("/world_map.jpg");
+		URL textureUrl = getClass().getResource("/world_map4k.jpg");
 		if (textureUrl != null) {
 			TextureLoader loader = new TextureLoader(textureUrl, null);
 			earthAppearance.setTexture(loader.getTexture());
