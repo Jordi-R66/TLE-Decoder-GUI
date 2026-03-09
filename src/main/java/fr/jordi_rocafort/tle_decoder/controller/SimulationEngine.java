@@ -10,6 +10,7 @@ import fr.jordi_rocafort.tle_decoder.model.physics.OrbitPropagator;
 import fr.jordi_rocafort.tle_decoder.view.OutputPanel;
 import fr.jordi_rocafort.tle_decoder.view.GroundTrackMapPanel;
 import fr.jordi_rocafort.tle_decoder.view.Orbit2DPanel;
+import fr.jordi_rocafort.tle_decoder.view.Orbit3DPanel;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -48,6 +49,8 @@ public class SimulationEngine {
 				// 1. Calcul de la physique actuelle
 				DynamicValues instant = OrbitPropagator.computeDynamicPhase(currentTle, currentInit, currentTimestamp);
 
+				Orbit3DPanel.getInstance().updatePosition(instant.geoCoords());
+
 				// 2. Mise à jour de la TRACE FUTURE (Toutes les 10 secondes)
 				if (currentTimestamp - lastFutureTrackUpdate >= 10) {
 					long duration = (long) 12 * 3600;
@@ -62,6 +65,7 @@ public class SimulationEngine {
 
 					SwingUtilities.invokeLater(() -> {
 						GroundTrackMapPanel.getInstance().setFutureTrack(futureTrack);
+						Orbit3DPanel.getInstance().setFutureTrack(futureTrack);
 					});
 
 					lastFutureTrackUpdate = currentTimestamp;

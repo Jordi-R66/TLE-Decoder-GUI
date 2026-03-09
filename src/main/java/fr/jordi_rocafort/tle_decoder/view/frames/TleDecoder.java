@@ -26,12 +26,17 @@ public class TleDecoder extends JFrame {
 
 		// Placement : DataPanel fixe à gauche, le reste prend tout l'espace central
 		this.add(dataPanel, BorderLayout.WEST);
+
+		// Création des onglets pour les vues orbitales (2D vs 3D)
+		JTabbedPane orbitTabs = new JTabbedPane();
+		orbitTabs.addTab("Orbite 2D", Orbit2DPanel.getInstance());
+		orbitTabs.addTab("Globe 3D", Orbit3DPanel.getInstance()); // NOUVEAU
+
 		// Création d'un séparateur pour diviser la partie droite en haut/bas
 		JSplitPane rightSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 		rightSplitPane.setTopComponent(GroundTrackMapPanel.getInstance());
-		rightSplitPane.setBottomComponent(Orbit2DPanel.getInstance());
+		rightSplitPane.setBottomComponent(orbitTabs); // On place les onglets en bas
 
-		// Donne 55% de l'espace à la carte au sol par défaut
 		rightSplitPane.setResizeWeight(0.55);
 		rightSplitPane.setContinuousLayout(true);
 		rightSplitPane.setDividerSize(6);
