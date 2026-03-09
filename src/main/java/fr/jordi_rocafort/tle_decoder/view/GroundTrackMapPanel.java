@@ -13,11 +13,11 @@ public class GroundTrackMapPanel extends JPanel {
 
     private static GroundTrackMapPanel instance;
     private GeoCoords currentPosition;
-    
+
     // Historique et futur
     private final LinkedList<GeoCoords> trackHistory = new LinkedList<>();
     private List<GeoCoords> futureTrack = new ArrayList<>();
-    private static final int MAX_HISTORY = 300; 
+    private static final int MAX_HISTORY = 300;
 
     public static GroundTrackMapPanel getInstance() {
         if (instance == null) {
@@ -28,7 +28,7 @@ public class GroundTrackMapPanel extends JPanel {
 
     private GroundTrackMapPanel() {
         this.setBackground(Color.BLACK); // Fond global noir pour les bandes
-        this.setBorder(BorderFactory.createTitledBorder("Trace au sol 2D (Projection Équirectangulaire)"));
+        this.setBorder(BorderFactory.createTitledBorder("Ground Track (Projection Équirectangulaire)"));
     }
 
     public void updatePosition(GeoCoords geoCoords) {
@@ -63,7 +63,7 @@ public class GroundTrackMapPanel extends JPanel {
 
         // 1. Calcul de la zone de dessin (Ratio strict 2:1)
         int drawWidth, drawHeight, offsetX, offsetY;
-        
+
         if (panelWidth > panelHeight * 2) {
             // Le panel est trop large -> Bandes noires sur les côtés
             drawHeight = panelHeight;
@@ -79,7 +79,7 @@ public class GroundTrackMapPanel extends JPanel {
         }
 
         // 2. Dessin du fond de la carte
-        g2d.setColor(new Color(20, 24, 32)); // Fond sombre "espace/radar"
+        g2d.setColor(new Color(20, 24, 32));
         g2d.fillRect(offsetX, offsetY, drawWidth, drawHeight);
 
         // 3. Dessin de la grille
@@ -92,20 +92,20 @@ public class GroundTrackMapPanel extends JPanel {
             int y = latToY(lat, drawHeight, offsetY);
             g2d.drawLine(offsetX, y, offsetX + drawWidth, y);
         }
-        
+
         g2d.setColor(new Color(80, 90, 110));
         g2d.drawLine(offsetX, offsetY + drawHeight / 2, offsetX + drawWidth, offsetY + drawHeight / 2); // Équateur
-        g2d.drawLine(offsetX + drawWidth / 2, offsetY, offsetX + drawWidth / 2, offsetY + drawHeight);  // Greenwich
+        g2d.drawLine(offsetX + drawWidth / 2, offsetY, offsetX + drawWidth / 2, offsetY + drawHeight); // Greenwich
 
-        // 4. Dessin de la trace FUTURE (En pointillés blancs/gris)
+        // 4. Dessin de la trace FUTURE (En pointillés)
         if (futureTrack != null && !futureTrack.isEmpty()) {
             g2d.setColor(new Color(255, 255, 255, 120));
-            // Style pointillé
-            g2d.setStroke(new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{5}, 0));
+            g2d.setStroke(
+                    new BasicStroke(1.5f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[] { 5 }, 0));
             drawTrack(g2d, futureTrack, drawWidth, drawHeight, offsetX, offsetY);
         }
 
-        // 5. Dessin de la trace HISTORIQUE (Ligne continue bleue)
+        // 5. Dessin de la trace HISTORIQUE (Ligne continue)
         if (trackHistory.size() > 1) {
             g2d.setColor(new Color(100, 200, 255, 180));
             g2d.setStroke(new BasicStroke(2.0f));
@@ -119,30 +119,28 @@ public class GroundTrackMapPanel extends JPanel {
 
             g2d.setColor(new Color(255, 50, 50, 100));
             g2d.fillOval(currentX - 10, currentY - 10, 20, 20);
-            
+
             g2d.setColor(Color.RED);
             g2d.fillOval(currentX - 4, currentY - 4, 8, 8);
         }
     }
 
-    /**
-     * Méthode utilitaire pour dessiner une trajectoire en gérant la césure du Pacifique (-180 à +180)
-     */
-    private void drawTrack(Graphics2D g2d, Iterable<GeoCoords> track, int drawWidth, int drawHeight, int offsetX, int offsetY) {
+    private void drawTrack(Graphics2D g2d, Iterable<GeoCoords> track, int drawWidth, int drawHeight, int offsetX,
+            int offsetY) {
         Path2D path = new Path2D.Double();
         boolean first = true;
         GeoCoords prev = null;
-        
+
         for (GeoCoords pos : track) {
             int x = lngToX(pos.lng(), drawWidth, offsetX);
             int y = latToY(pos.lat(), drawHeight, offsetY);
-            
+
             if (first) {
                 path.moveTo(x, y);
                 first = false;
             } else {
                 if (Math.abs(pos.lng() - prev.lng()) > 180) {
-                    path.moveTo(x, y); // Casse la ligne pour éviter un trait horizontal sur toute la carte
+                    path.moveTo(x, y);
                 } else {
                     path.lineTo(x, y);
                 }
@@ -152,8 +150,6 @@ public class GroundTrackMapPanel extends JPanel {
         g2d.draw(path);
     }
 
-    // --- Conversions Mathématiques ---
-    
     private int lngToX(double lng, int drawWidth, int offsetX) {
         return offsetX + (int) ((lng + 180.0) / 360.0 * drawWidth);
     }
