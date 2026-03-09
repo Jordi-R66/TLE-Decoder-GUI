@@ -134,8 +134,14 @@ public class Orbit3DPanel extends JPanel {
 		t3dSat.setTranslation(satPosition);
 		satTransformGroup.setTransform(t3dSat);
 
-		// Zoom de la caméra à 2.0
-		double distMultiplier = 2.0;
+		// 1. Calcul de la distance du satellite depuis le centre (en Rayons Terrestres)
+		double r3d = Math.sqrt(x * x + y * y + z * z);
+
+		// 2. Écart absolu : On force la caméra à être TOUJOURS 1.5 rayons terrestres
+		// plus loin
+		double constantOffset = 1.5;
+		double distMultiplier = (r3d + constantOffset) / r3d;
+
 		Point3d camPos = new Point3d(x * distMultiplier, y * distMultiplier, z * distMultiplier);
 
 		Vector3d upVector = new Vector3d(0, 1, 0);
