@@ -76,9 +76,10 @@ public class FileSelectionController implements ActionListener {
 				// On charge tout une seule fois
 				currentLoadedBlocks = TleFileManager.getAllNoradIDs(selectedFile.getPath());
 
-				// On active la recherche et on la vide (ce qui déclenche l'affichage complet)
+				// On active la recherche et on la vide
 				inputPanel.getSearchField().setEnabled(true);
 				inputPanel.getSearchField().setText("");
+				updateComboFilter("");
 
 				System.out.printf("%d TLEs trouvées dans %s\n", currentLoadedBlocks.size(),
 						selectedFile.getAbsolutePath());
