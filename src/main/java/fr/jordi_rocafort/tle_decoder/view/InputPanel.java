@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -26,6 +27,7 @@ public class InputPanel extends JPanel {
 	private JPanel cards;
 	private JButton loadBtn;
 	private JComboBox<String> satCombo;
+	private JTextField searchField;
 	private JTextArea tleTextArea;
 	private JButton confirmBtn;
 
@@ -68,12 +70,19 @@ public class InputPanel extends JPanel {
 		gbc.weightx = 1.0;
 
 		loadBtn = new JButton("Open File");
+
+		searchField = new JTextField();
+		searchField.putClientProperty("JTextField.placeholderText", "Rechercher (Nom ou ID)...");
+		searchField.setEnabled(false);
+
 		satCombo = new JComboBox<>(new String[] { "Select a NORAD ID" });
 		satCombo.setEnabled(false);
 
 		gbc.gridy = 0;
 		filePanel.add(loadBtn, gbc);
 		gbc.gridy = 1;
+		filePanel.add(searchField, gbc);
+		gbc.gridy = 2;
 		filePanel.add(satCombo, gbc);
 		cards.add(filePanel, "FILE");
 
@@ -169,6 +178,10 @@ public class InputPanel extends JPanel {
 
 	public JTextArea getTleTextArea() {
 		return tleTextArea;
+	}
+
+	public JTextField getSearchField() {
+		return searchField;
 	}
 
 	public JButton getConfirmBtn() {

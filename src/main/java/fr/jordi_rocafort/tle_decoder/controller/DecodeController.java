@@ -58,8 +58,10 @@ public class DecodeController implements ActionListener {
 				System.out.println("Lancement du décodage pour le fichier : " + filePath
 						+ " | Sat: " + selectedSat);
 
-				int blockIndex = FileSelectionController.getInstance().getAssociations().get(selectedSat);
-				int noradId = TleFileManager.getAllNoradIDs(filePath).get(blockIndex).noradId();
+				int noradId = FileSelectionController.getInstance().getAssociations().get(selectedSat);
+
+				tle = TleFileManager.getSingleTLE(filePath, noradId);
+				init = OrbitPropagator.computeStaticPhase(tle);
 
 				tle = TleFileManager.getSingleTLE(filePath, noradId);
 				init = OrbitPropagator.computeStaticPhase(tle);
