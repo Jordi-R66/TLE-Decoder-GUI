@@ -2,10 +2,11 @@ package fr.jordi_rocafort.tle_decoder.view;
 
 import fr.jordi_rocafort.tle_decoder.model.data.Coords3D;
 import fr.jordi_rocafort.tle_decoder.model.physics.Constants;
+import fr.jordi_rocafort.tle_decoder.util.ResourceManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.net.URL;
+import java.awt.image.BufferedImage;
 import java.util.List;
 
 import org.jogamp.java3d.*;
@@ -54,9 +55,9 @@ public class Orbit3DPanel extends JPanel {
 
 		// 1. --- LA TERRE ---
 		Appearance earthAppearance = new Appearance();
-		URL textureUrl = getClass().getResource("/world_map4k.jpg");
-		if (textureUrl != null) {
-			TextureLoader loader = new TextureLoader(textureUrl, null);
+		BufferedImage textureImage = ResourceManager.getWorldMap();
+		if (textureImage != null) {
+			TextureLoader loader = new TextureLoader(textureImage, (String)null);
 			earthAppearance.setTexture(loader.getTexture());
 
 			Material material = new Material();

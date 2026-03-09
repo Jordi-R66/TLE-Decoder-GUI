@@ -1,13 +1,12 @@
 package fr.jordi_rocafort.tle_decoder.view;
 
 import fr.jordi_rocafort.tle_decoder.model.data.GeoCoords;
+import fr.jordi_rocafort.tle_decoder.util.ResourceManager;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
-import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ArrayList;
@@ -37,16 +36,7 @@ public class GroundTrackMapPanel extends JPanel {
 		this.setBorder(BorderFactory.createTitledBorder("Ground Track (Projection Équirectangulaire)"));
 
 		// Chargement de l'image de fond
-		try {
-			InputStream is = getClass().getResourceAsStream("/world_map4k.jpg");
-			if (is != null) {
-				mapImage = ImageIO.read(is);
-			} else {
-				System.err.println("Avertissement : Image /world_map2k.jpg introuvable. Rendu de secours activé.");
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		mapImage = ResourceManager.getWorldMap();
 	}
 
 	public void updatePosition(GeoCoords geoCoords) {
