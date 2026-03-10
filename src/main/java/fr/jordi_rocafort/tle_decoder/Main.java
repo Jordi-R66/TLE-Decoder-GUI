@@ -10,6 +10,9 @@ import java.time.Instant;
 import java.util.Locale;
 
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+
+import com.formdev.flatlaf.*;
 
 public class Main {
 
@@ -39,6 +42,10 @@ public class Main {
 	}
 
 	public static void guiMode() {
+		try {
+			UIManager.setLookAndFeel(new FlatDarkLaf());
+		} catch (Exception e) {}
+
 		SwingUtilities.invokeLater(() -> {
 			TleDecoder tleDecoder = new TleDecoder();
 
