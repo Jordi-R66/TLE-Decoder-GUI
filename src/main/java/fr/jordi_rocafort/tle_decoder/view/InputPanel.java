@@ -7,6 +7,7 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Toolkit;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -123,32 +124,46 @@ public class InputPanel extends JPanel {
 		@Override
 		public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr)
 				throws BadLocationException {
+			if (string != null) {
+				string = cleanPastedText(string);
+			}
 			if (isValid(fb, offset, 0, string)) {
 				super.insertString(fb, offset, string, attr);
+			} else {
+				Toolkit.getDefaultToolkit().beep(); // Retour sonore si bloqué
 			}
 		}
 
 		@Override
 		public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs)
 				throws BadLocationException {
+			if (text != null) {
+				text = cleanPastedText(text);
+			}
 			if (isValid(fb, offset, length, text)) {
 				super.replace(fb, offset, length, text, attrs);
+			} else {
+				Toolkit.getDefaultToolkit().beep(); // Retour sonore si bloqué
 			}
+		}
+
+		/**
+		 * Nettoie le texte entrant (notamment depuis le presse-papier)
+		 */
+		private String cleanPastedText(String text) {
+			// Normalise les retours chariots et supprime les \n finaux qui créent des
+			// "lignes vides"
+			return text.replace("\r\n", "\n").replace("\r", "\n").replaceAll("\\n+$", "");
 		}
 
 		private boolean isValid(FilterBypass fb, int offset, int length, String text) throws BadLocationException {
 			if (text == null)
 				return true;
 
-			// Reconstruire le texte tel qu'il serait après l'insertion/remplacement
 			String currentContent = fb.getDocument().getText(0, fb.getDocument().getLength());
 			String beforeInsert = currentContent.substring(0, offset);
 			String afterInsert = currentContent.substring(offset + length);
 			String proposedContent = beforeInsert + text + afterInsert;
-
-			// Normaliser les retours à la ligne (utile en cas de copier-coller depuis
-			// Windows)
-			proposedContent = proposedContent.replace("\r\n", "\n").replace("\r", "\n");
 
 			String[] lines = proposedContent.split("\n", -1);
 

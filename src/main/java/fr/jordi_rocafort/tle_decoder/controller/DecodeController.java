@@ -2,6 +2,7 @@ package fr.jordi_rocafort.tle_decoder.controller;
 
 import fr.jordi_rocafort.tle_decoder.model.data.*;
 import fr.jordi_rocafort.tle_decoder.model.parser.TleFileManager;
+import fr.jordi_rocafort.tle_decoder.model.parser.TleParser;
 import fr.jordi_rocafort.tle_decoder.model.physics.OrbitPropagator;
 import fr.jordi_rocafort.tle_decoder.view.*;
 
@@ -66,9 +67,6 @@ public class DecodeController implements ActionListener {
 
 				tle = TleFileManager.getSingleTLE(filePath, noradId);
 				init = OrbitPropagator.computeStaticPhase(tle);
-
-				tle = TleFileManager.getSingleTLE(filePath, noradId);
-				init = OrbitPropagator.computeStaticPhase(tle);
 			} catch (Exception exception) {
 				exception.printStackTrace();
 			}
@@ -84,7 +82,16 @@ public class DecodeController implements ActionListener {
 
 			System.out.println("Lancement du décodage pour le texte manuel :\n" + tleText);
 
-			// TODO: Appeler TleParser pour décoder la chaîne de caractères brute
+			TleBlock tempBlock = TleBlock.fromRawBlock(tleText);
+
+			if (tempBlock != null) {
+				tle = TleParser.parseLines(tempBlock);
+				init = OrbitPropagator.computeStaticPhase(tle);
+			} else {
+				JOptionPane.showMessageDialog(inputPanel, "Vérifiez avoir saisie une 3LE", "Erreur",
+						JOptionPane.WARNING_MESSAGE);
+				return;
+			}
 		}
 
 		// 2. Lancement en temps réel

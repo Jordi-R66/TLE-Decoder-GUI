@@ -86,7 +86,7 @@ public class TleParser {
 	 */
 	private static double parseTleScientificNotation(String str) {
 		str = str.trim();
-		if (str.isEmpty() || str.equals("00000-0")) {
+		if (str.isEmpty() || str.equals("00000-0") || str.equals("00000+0")) {
 			return 0.0;
 		}
 
