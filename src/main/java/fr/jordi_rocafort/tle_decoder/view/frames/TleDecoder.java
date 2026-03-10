@@ -2,6 +2,8 @@ package fr.jordi_rocafort.tle_decoder.view.frames;
 
 import fr.jordi_rocafort.tle_decoder.view.*;
 
+import java.util.ArrayList;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -16,7 +18,9 @@ public class TleDecoder extends JFrame {
 		instance = this;
 		dataPanel = DataPanel.getInstance();
 
-		this.setSize(1100, 650);
+		ArrayList<Component> vues = new ArrayList<>(3);
+
+		this.setSize(1100, 700);
 		this.setLocationRelativeTo(null);
 		this.setLayout(new BorderLayout());
 
@@ -28,8 +32,6 @@ public class TleDecoder extends JFrame {
 		this.add(dataPanel, BorderLayout.WEST);
 
 		JSplitPane lowerPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-		lowerPane.setLeftComponent(Orbit2DPanel.getInstance());
-		lowerPane.setRightComponent(GroundTrackMapPanel.getInstance());
 
 		lowerPane.setResizeWeight(0.5);
 		lowerPane.setContinuousLayout(true);
@@ -37,12 +39,20 @@ public class TleDecoder extends JFrame {
 
 		// Création d'un séparateur pour diviser la partie droite en haut/bas
 		JSplitPane mainPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-		mainPane.setTopComponent(Orbit3DPanel.getInstance());
-		mainPane.setBottomComponent(lowerPane);
 
 		mainPane.setResizeWeight(0.55);
 		mainPane.setContinuousLayout(true);
 		mainPane.setDividerSize(6);
+
+		vues.add(Orbit2DPanel.getInstance());
+		vues.add(GroundTrackMapPanel.getInstance());
+		vues.add(Orbit3DPanel.getInstance());
+
+		lowerPane.setLeftComponent(vues.get(0));
+		lowerPane.setRightComponent(vues.get(1));
+		mainPane.setTopComponent(vues.get(2));
+
+		mainPane.setBottomComponent(lowerPane);
 
 		// On place ce panneau divisé au centre (qui prend tout l'espace restant à
 		// droite du DataPanel)
