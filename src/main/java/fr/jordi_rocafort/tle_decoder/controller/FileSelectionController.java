@@ -1,7 +1,7 @@
 package fr.jordi_rocafort.tle_decoder.controller;
 
+import fr.jordi_rocafort.tle_decoder.model.tle.*;
 import fr.jordi_rocafort.tle_decoder.view.InputPanel;
-import fr.jordi_rocafort.tle_decoder.model.parser.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;

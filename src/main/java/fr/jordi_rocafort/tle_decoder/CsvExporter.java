@@ -3,9 +3,9 @@ package fr.jordi_rocafort.tle_decoder;
 import fr.jordi_rocafort.tle_decoder.model.data.DynamicValues;
 import fr.jordi_rocafort.tle_decoder.model.data.StaticValues;
 import fr.jordi_rocafort.tle_decoder.model.data.TLE;
-import fr.jordi_rocafort.tle_decoder.model.parser.TleFileManager;
 import fr.jordi_rocafort.tle_decoder.model.physics.Constants;
 import fr.jordi_rocafort.tle_decoder.model.physics.OrbitPropagator;
+import fr.jordi_rocafort.tle_decoder.model.tle.TleFileManager;
 
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;

@@ -1,9 +1,9 @@
 package fr.jordi_rocafort.tle_decoder.controller;
 
 import fr.jordi_rocafort.tle_decoder.model.data.*;
-import fr.jordi_rocafort.tle_decoder.model.parser.TleFileManager;
-import fr.jordi_rocafort.tle_decoder.model.parser.TleParser;
 import fr.jordi_rocafort.tle_decoder.model.physics.OrbitPropagator;
+import fr.jordi_rocafort.tle_decoder.model.tle.TleFileManager;
+import fr.jordi_rocafort.tle_decoder.model.tle.TleParser;
 import fr.jordi_rocafort.tle_decoder.view.*;
 
 import javax.swing.*;

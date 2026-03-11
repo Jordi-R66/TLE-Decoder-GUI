@@ -1,8 +1,8 @@
 package fr.jordi_rocafort.tle_decoder;
 
 import fr.jordi_rocafort.tle_decoder.model.data.*;
-import fr.jordi_rocafort.tle_decoder.model.parser.TleFileManager;
 import fr.jordi_rocafort.tle_decoder.model.physics.OrbitPropagator;
+import fr.jordi_rocafort.tle_decoder.model.tle.TleFileManager;
 import fr.jordi_rocafort.tle_decoder.util.TimeUtils;
 import fr.jordi_rocafort.tle_decoder.view.frames.TleDecoder;
 

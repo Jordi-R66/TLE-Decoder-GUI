@@ -1,4 +1,4 @@
-package fr.jordi_rocafort.tle_decoder.model.parser;
+package fr.jordi_rocafort.tle_decoder.model.tle;
 
 import fr.jordi_rocafort.tle_decoder.model.data.TLE;
 import fr.jordi_rocafort.tle_decoder.model.data.TleBlock;

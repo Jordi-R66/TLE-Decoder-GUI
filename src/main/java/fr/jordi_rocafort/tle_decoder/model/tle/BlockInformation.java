@@ -1,4 +1,4 @@
-package fr.jordi_rocafort.tle_decoder.model.parser;
+package fr.jordi_rocafort.tle_decoder.model.tle;
 
 public record BlockInformation(String objName, int noradId, long blockIndex) implements Comparable<BlockInformation> {
 	@Override
