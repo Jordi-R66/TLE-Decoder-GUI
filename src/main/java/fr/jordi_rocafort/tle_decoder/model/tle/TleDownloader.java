@@ -21,6 +21,7 @@ import java.io.BufferedWriter;
 import java.net.URI;
 
 public class TleDownloader {
+	private static final String USER_AGENT = "TLE-Decoder/1.0 (See https://github.com/Jordi-R66/TLE-Decoder-GUI)";
 	private static final String BASE_URL = "https://celestrak.org/NORAD/elements/gp.php?GROUP=SET_NAME&FORMAT=tle";
 	public static final ArrayList<String> datasets = new ArrayList<String>(
 			Arrays.asList(new String[] {
@@ -42,7 +43,7 @@ public class TleDownloader {
 
 		if (datasets.contains(datasetName)) {
 			try {
-				req = HttpRequest.newBuilder().uri(uri).GET().build();
+				req = HttpRequest.newBuilder().uri(uri).header("User-Agent", USER_AGENT).GET().build();
 				response = client.send(req, HttpResponse.BodyHandlers.ofString());
 
 				statusCode = response.statusCode();
@@ -52,7 +53,7 @@ public class TleDownloader {
 
 					if (remakeRequest) {
 						uri = URI.create(BASE_URL.replace("SET_NAME", datasetName).replace("GROUP", "SPECIAL"));
-						req = HttpRequest.newBuilder().uri(uri).GET().build();
+						req = HttpRequest.newBuilder().uri(uri).header("User-Agent", USER_AGENT).GET().build();
 						response = client.send(req, HttpResponse.BodyHandlers.ofString());
 						statusCode = response.statusCode();
 					}
