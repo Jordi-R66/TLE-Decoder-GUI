@@ -2,7 +2,7 @@ package fr.jordi_rocafort.tle_decoder;
 
 import fr.jordi_rocafort.tle_decoder.model.data.*;
 import fr.jordi_rocafort.tle_decoder.model.physics.OrbitPropagator;
-import fr.jordi_rocafort.tle_decoder.model.tle.TleFileManager;
+import fr.jordi_rocafort.tle_decoder.model.tle.*;
 import fr.jordi_rocafort.tle_decoder.util.TimeUtils;
 import fr.jordi_rocafort.tle_decoder.view.frames.TleDecoder;
 
@@ -54,14 +54,14 @@ public class Main {
 	}
 
 	public static void main(String[] args) {
-		// Force l'affichage des nombres avec un point "." au lieu d'une virgule ","
-		// (format anglo-saxon)
+		// Force l'affichage des nombres avec un point "." au lieu d'une virgule "," (format anglo-saxon)
 		Locale.setDefault(Locale.US);
+		//TleDownloader.downloadAndMergeAllTles(4);
 		guiMode();
 	}
 
 	/**
-	 * Traduction exacte de la fonction printValues de ton projet C original.
+	 * Traduction exacte de la fonction printValues du projet C original.
 	 */
 	private static void printValues(TLE tle, StaticValues init, DynamicValues instant, long currentTimestamp) {
 
