@@ -115,6 +115,49 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+			    <groupId>com.akathist.maven.plugins.launch4j</groupId>
+			    <artifactId>launch4j-maven-plugin</artifactId>
+			    <version>2.5.3</version>
+			    <executions>
+			        <execution>
+			            <id>l4j-clui</id>
+			            <phase>package</phase>
+			            <goals>
+			                <goal>launch4j</goal>
+			            </goals>
+			            <configuration>
+			                <headerType>gui</headerType>
+			                <jar>${project.build.directory}/${project.build.finalName}.jar</jar>
+			                <outfile>${project.build.directory}/TLE-Decoder.exe</outfile>
+			                <downloadUrl>https://java.com/download</downloadUrl>
+			                <classPath>
+			                    <mainClass>fr.jordi_rocafort.tle_decoder.Main</mainClass>
+			                    <preCp>anything</preCp>
+			                </classPath>
+			                <jre>
+			                    <path>%JAVA_HOME%;%PATH%</path>
+			                    <bundledJre64Bit>true</bundledJre64Bit>
+			                    <opts>
+			                        <opt>--enable-native-access=ALL-UNNAMED</opt>
+			                        <opt>--add-opens=java.desktop/sun.awt=ALL-UNNAMED</opt>
+			                    </opts>
+			                </jre>
+			                <versionInfo>
+			                    <fileVersion>1.2.0.0</fileVersion>
+			                    <txtFileVersion>1.2</txtFileVersion>
+			                    <fileDescription>TLE Decoder GUI</fileDescription>
+			                    <copyright>Jordi Rocafort</copyright>
+			                    <productVersion>1.2.0.0</productVersion>
+			                    <txtProductVersion>1.2</txtProductVersion>
+			                    <productName>TLE-Decoder</productName>
+			                    <internalName>TLE-Decoder</internalName>
+			                    <originalFilename>TLE-Decoder.exe</originalFilename>
+			                </versionInfo>
+			            </configuration>
+			        </execution>
+			    </executions>
+			</plugin>
 		</plugins>
 	</build>
 </project>
