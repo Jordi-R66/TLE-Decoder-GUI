@@ -51,6 +51,8 @@ public class FileSelectionController implements ActionListener {
 				updateComboFilter(inputPanel.getSearchField().getText());
 			}
 		});
+
+		this.inputPanel.getDownloadBtn().addActionListener(e -> startDownloadTask());
 	}
 
 	public static FileSelectionController getInstance() {
@@ -63,6 +65,14 @@ public class FileSelectionController implements ActionListener {
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		JFileChooser fileChooser = new JFileChooser();
+
+		File defaultDir = new File("TLEs");
+
+		if (!defaultDir.exists()) {
+			defaultDir.mkdirs(); // Crée le dossier s'il n'existe pas encore
+		}
+
+		fileChooser.setCurrentDirectory(defaultDir);
 		fileChooser.setDialogTitle("Sélectionner un fichier TLE");
 		fileChooser.setFileFilter(new FileNameExtensionFilter("Fichiers texte/TLE (*.txt, *.tle)", "txt", "tle"));
 
@@ -133,5 +143,54 @@ public class FileSelectionController implements ActionListener {
 
 	public String getSelectedFilePath() {
 		return (selectedFile != null) ? selectedFile.getAbsolutePath() : null;
+	}
+
+	/**
+	 * Lance le téléchargement en arrière-plan pour ne pas figer l'interface
+	 * (SwingWorker).
+	 */
+	private void startDownloadTask() {
+		JButton btn = inputPanel.getDownloadBtn();
+		btn.setEnabled(false);
+		btn.setText("Downloading...");
+
+		SwingWorker<Void, Void> worker = new SwingWorker<>() {
+			@Override
+			protected Void doInBackground() throws Exception {
+				TleDownloader.downloadAndMergeAllTles(4);
+				return null;
+			}
+
+			@Override
+			protected void done() {
+				btn.setEnabled(true);
+				btn.setText("Download TLEs");
+
+				TleFileManager.getAssociations().clear();
+
+				reloadCurrentFile();
+
+				DecodeController.getInstance().refreshActiveSatellite();
+
+				JOptionPane.showMessageDialog(inputPanel, "Mise à jour des TLE terminée !", "Succès",
+						JOptionPane.INFORMATION_MESSAGE);
+			}
+		};
+		worker.execute();
+	}
+
+	/**
+	 * Recharge les TLEs du fichier actuellement sélectionné.
+	 */
+	public void reloadCurrentFile() {
+		if (selectedFile != null) {
+			try {
+				currentLoadedBlocks = TleFileManager.getAllNoradIDs(selectedFile.getAbsolutePath());
+				// On applique à nouveau la recherche actuelle pour rafraîchir la liste
+				updateComboFilter(inputPanel.getSearchField().getText());
+			} catch (Exception exception) {
+				exception.printStackTrace();
+			}
+		}
 	}
 }

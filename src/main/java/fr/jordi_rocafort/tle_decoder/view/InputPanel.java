@@ -31,6 +31,7 @@ public class InputPanel extends JPanel {
 	private JTextField searchField;
 	private JTextArea tleTextArea;
 	private JButton confirmBtn;
+	private JButton downloadBtn;
 
 	private static InputPanel instance = null;
 
@@ -71,6 +72,11 @@ public class InputPanel extends JPanel {
 		gbc.weightx = 1.0;
 
 		loadBtn = new JButton("Open File");
+		downloadBtn = new JButton("Download TLEs");
+
+		JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+		btnPanel.add(loadBtn);
+		btnPanel.add(downloadBtn);
 
 		searchField = new JTextField();
 		searchField.putClientProperty("JTextField.placeholderText", "Rechercher (Nom ou ID)...");
@@ -80,7 +86,7 @@ public class InputPanel extends JPanel {
 		satCombo.setEnabled(false);
 
 		gbc.gridy = 0;
-		filePanel.add(loadBtn, gbc);
+		filePanel.add(btnPanel, gbc);
 		gbc.gridy = 1;
 		filePanel.add(searchField, gbc);
 		gbc.gridy = 2;
@@ -209,5 +215,9 @@ public class InputPanel extends JPanel {
 
 	public JRadioButton getManualRadio() {
 		return manualRadio;
+	}
+
+	public JButton getDownloadBtn() {
+		return downloadBtn;
 	}
 }

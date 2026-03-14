@@ -16,6 +16,9 @@ public class DecodeController implements ActionListener {
 	private TLE tle;
 	private StaticValues init;
 	private SimulationEngine simulationEngine;
+	private int currentNoradId = -1;
+	private String currentFilePath = null;
+	private boolean isTrackingFromFile = false;
 
 	private static DecodeController instance = null;
 
@@ -60,10 +63,13 @@ public class DecodeController implements ActionListener {
 			try {
 				String filePath = fileController.getSelectedFilePath();
 				String selectedSat = (String) inputPanel.getSatCombo().getSelectedItem();
-				System.out.println("Lancement du décodage pour le fichier : " + filePath
-						+ " | Sat: " + selectedSat);
+				System.out.println("Lancement du décodage pour le fichier : " + filePath + " | Sat: " + selectedSat);
 
 				int noradId = FileSelectionController.getInstance().getAssociations().get(selectedSat);
+
+				this.currentNoradId = noradId;
+				this.currentFilePath = filePath;
+				this.isTrackingFromFile = true;
 
 				tle = TleFileManager.getSingleTLE(filePath, noradId);
 				init = OrbitPropagator.computeStaticPhase(tle);
@@ -74,6 +80,9 @@ public class DecodeController implements ActionListener {
 		} else {
 			// Mode Manuel
 			String tleText = inputPanel.getTleTextArea().getText().trim();
+
+			this.isTrackingFromFile = false;
+
 			if (tleText.isEmpty()) {
 				JOptionPane.showMessageDialog(inputPanel, "Le bloc TLE est vide.", "Erreur",
 						JOptionPane.WARNING_MESSAGE);
@@ -97,6 +106,24 @@ public class DecodeController implements ActionListener {
 		// 2. Lancement en temps réel
 		if (this.tle != null && this.init != null) {
 			simulationEngine.startSimulation(tle, init);
+		}
+	}
+
+	/**
+	 * Récupère la TLE mise à jour et relance la simulation sur le satellite en
+	 * cours.
+	 */
+	public void refreshActiveSatellite() {
+		if (isTrackingFromFile && currentFilePath != null && currentNoradId != -1) {
+			try {
+				System.out.println("Rafraîchissement de la trajectoire pour le satellite : " + currentNoradId);
+				this.tle = TleFileManager.getSingleTLE(currentFilePath, currentNoradId);
+				this.init = OrbitPropagator.computeStaticPhase(tle);
+
+				this.simulationEngine.startSimulation(tle, init);
+			} catch (Exception e) {
+				System.err.println("Impossible de rafraîchir le satellite : " + e.getMessage());
+			}
 		}
 	}
 }
