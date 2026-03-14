@@ -142,7 +142,7 @@ public class Orbit3DPanel extends JPanel {
 
 		// 2. Écart absolu : On force la caméra à être TOUJOURS 1.5 rayons terrestres
 		// plus loin
-		double constantOffset = 1.5;
+		double constantOffset = 3;
 		double distMultiplier = (r3d + constantOffset) / r3d;
 
 		Point3d camPos = new Point3d(x * distMultiplier, y * distMultiplier, z * distMultiplier);
