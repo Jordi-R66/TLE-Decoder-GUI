@@ -12,6 +12,11 @@ public class TleDecoder extends JFrame {
 	private static TleDecoder instance;
 	private static DataPanel dataPanel;
 
+	// Variables pour stocker l'état précédent avant le plein écran
+	private boolean isFullScreen = false;
+	private Rectangle normalBounds;
+	private int normalState;
+
 	public TleDecoder() {
 		super("TLE-Decoder");
 
@@ -23,10 +28,6 @@ public class TleDecoder extends JFrame {
 		this.setSize(1100, 700);
 		this.setLocationRelativeTo(null);
 		this.setLayout(new BorderLayout());
-
-		/*// Panneau temporaire de droite (C, D, E)
-		JPanel rightPanelPlaceholder = new JPanel();
-		rightPanelPlaceholder.setBackground(new Color(40, 44, 52));*/
 
 		// Placement : DataPanel fixe à gauche, le reste prend tout l'espace central
 		this.add(dataPanel, BorderLayout.WEST);
@@ -54,8 +55,7 @@ public class TleDecoder extends JFrame {
 
 		mainPane.setBottomComponent(lowerPane);
 
-		// On place ce panneau divisé au centre (qui prend tout l'espace restant à
-		// droite du DataPanel)
+		// On place ce panneau divisé au centre (qui prend tout l'espace restant à droite du DataPanel)
 		this.add(mainPane, BorderLayout.CENTER);
 
 		this.addWindowListener(new WindowAdapter() {
@@ -64,6 +64,57 @@ public class TleDecoder extends JFrame {
 				close();
 			}
 		});
+
+		// --- CONFIGURATION DU RACCOURCI F11 ---
+		setupFullScreenBinding();
+	}
+
+	/**
+	 * Configure le Key Binding pour la touche F11 (fonctionne peu importe le
+	 * composant qui a le focus).
+	 */
+	private void setupFullScreenBinding() {
+		JRootPane rootPane = this.getRootPane();
+
+		// On associe la touche F11 à une action nommée "toggleFullScreen"
+		rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+				.put(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0), "toggleFullScreen");
+
+		// On définit ce que fait cette action
+		rootPane.getActionMap().put("toggleFullScreen", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				toggleFullScreen();
+			}
+		});
+	}
+
+	/**
+	 * Bascule entre le mode fenêtré normal et le plein écran sans bordures.
+	 */
+	private void toggleFullScreen() {
+		if (!isFullScreen) {
+			// Sauvegarde de l'état actuel (taille, position, maximisation)
+			normalBounds = this.getBounds();
+			normalState = this.getExtendedState();
+
+			// Passage en plein écran
+			this.dispose();
+			this.setUndecorated(true);
+			this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+			this.setVisible(true);
+
+			isFullScreen = true;
+		} else {
+			// Retour au mode fenêtré
+			this.dispose();
+			this.setUndecorated(false);
+			this.setExtendedState(normalState);
+			this.setBounds(normalBounds);
+			this.setVisible(true);
+
+			isFullScreen = false;
+		}
 	}
 
 	public static TleDecoder getInstance() {
