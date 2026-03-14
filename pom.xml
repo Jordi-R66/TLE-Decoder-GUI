@@ -7,7 +7,7 @@
 	<packaging>jar</packaging>
 	<version>1.2</version>
 	<name>TLE-Decoder</name>
-	<url>http://maven.apache.org</url>
+	<url>https://github.com/Jordi-R66/TLE-Decoder-GUI</url>
 
 	<properties>
 		<maven.compiler.source>21</maven.compiler.source>
