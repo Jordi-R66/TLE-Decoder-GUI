@@ -2,8 +2,6 @@ package fr.jordi_rocafort.tle_decoder.view.frames;
 
 import fr.jordi_rocafort.tle_decoder.view.*;
 
-import java.util.ArrayList;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -23,40 +21,47 @@ public class TleDecoder extends JFrame {
 		instance = this;
 		dataPanel = DataPanel.getInstance();
 
-		ArrayList<Component> vues = new ArrayList<>(3);
-
 		this.setSize(1100, 700);
 		this.setLocationRelativeTo(null);
 		this.setLayout(new BorderLayout());
 
-		// Placement : DataPanel fixe à gauche, le reste prend tout l'espace central
+		// Placement : DataPanel fixe à gauche
 		this.add(dataPanel, BorderLayout.WEST);
 
-		JSplitPane lowerPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+		// Panneau inférieur contenant la vue 2D et la carte (50-50 grâce au GridLayout)
+		JPanel bottomPanel = new JPanel(new GridLayout(1, 2));
+		bottomPanel.add(Orbit2DPanel.getInstance());
+		bottomPanel.add(GroundTrackMapPanel.getInstance());
 
-		lowerPane.setResizeWeight(0.5);
-		lowerPane.setContinuousLayout(true);
-		lowerPane.setDividerSize(6);
+		// Panneau droit contenant la vue 3D (Haut) et le panneau inférieur (Bas)
+		JPanel rightPanel = new JPanel(new BorderLayout());
+		rightPanel.add(Orbit3DPanel.getInstance(), BorderLayout.CENTER);
+		rightPanel.add(bottomPanel, BorderLayout.SOUTH);
 
-		// Création d'un séparateur pour diviser la partie droite en haut/bas
-		JSplitPane mainPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+		// On place ce panneau droit au centre (qui prend tout l'espace restant à droite
+		// du DataPanel)
+		this.add(rightPanel, BorderLayout.CENTER);
 
-		mainPane.setResizeWeight(0.55);
-		mainPane.setContinuousLayout(true);
-		mainPane.setDividerSize(6);
+		// Listener pour forcer le ratio dynamique du panneau inférieur sans autoriser
+		// l'utilisateur à le modifier
+		rightPanel.addComponentListener(new ComponentAdapter() {
+			@Override
+			public void componentResized(ComponentEvent e) {
+				int width = rightPanel.getWidth();
 
-		vues.add(Orbit2DPanel.getInstance());
-		vues.add(GroundTrackMapPanel.getInstance());
-		vues.add(Orbit3DPanel.getInstance());
+				// La carte occupe 50% de la largeur totale (width / 2)
+				// Sa hauteur doit être égale à 50% de sa propre largeur, soit (width / 2) / 2 =
+				// width / 4
+				int requiredHeight = width / 4;
 
-		lowerPane.setLeftComponent(vues.get(0));
-		lowerPane.setRightComponent(vues.get(1));
-		mainPane.setTopComponent(vues.get(2));
-
-		mainPane.setBottomComponent(lowerPane);
-
-		// On place ce panneau divisé au centre (qui prend tout l'espace restant à droite du DataPanel)
-		this.add(mainPane, BorderLayout.CENTER);
+				// On applique cette hauteur uniquement si elle a changé pour éviter les boucles
+				// de redimensionnement
+				if (bottomPanel.getPreferredSize().height != requiredHeight) {
+					bottomPanel.setPreferredSize(new Dimension(width, requiredHeight));
+					rightPanel.revalidate();
+				}
+			}
+		});
 
 		this.addWindowListener(new WindowAdapter() {
 			@Override
