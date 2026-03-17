@@ -90,29 +90,38 @@ public class TleDecoder extends JFrame {
 	}
 
 	/**
-	 * Bascule entre le mode fenêtré normal et le plein écran sans bordures.
+	 * Bascule entre le mode fenêtré normal et le plein écran exclusif (vrai
+	 * fullscreen).
 	 */
 	private void toggleFullScreen() {
+		GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+
 		if (!isFullScreen) {
 			// Sauvegarde de l'état actuel (taille, position, maximisation)
 			normalBounds = this.getBounds();
 			normalState = this.getExtendedState();
 
-			// Passage en plein écran
-			this.dispose();
+			// Passage en vrai plein écran
+			this.dispose(); // Nécessaire avant de changer l'état 'undecorated'
 			this.setUndecorated(true);
-			this.setExtendedState(JFrame.MAXIMIZED_BOTH);
-			this.setVisible(true);
 
+			// Demande au système graphique de passer cette fenêtre en plein écran absolu
+			device.setFullScreenWindow(this);
+
+			this.setVisible(true);
 			isFullScreen = true;
 		} else {
 			// Retour au mode fenêtré
 			this.dispose();
+
+			// Libère le mode plein écran exclusif
+			device.setFullScreenWindow(null);
+
 			this.setUndecorated(false);
 			this.setExtendedState(normalState);
 			this.setBounds(normalBounds);
-			this.setVisible(true);
 
+			this.setVisible(true);
 			isFullScreen = false;
 		}
 	}
