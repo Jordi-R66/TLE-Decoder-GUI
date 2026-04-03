@@ -144,12 +144,12 @@
 								</opts>
 							</jre>
 							<versionInfo>
-								<fileVersion>1.2.0.0</fileVersion>
-								<txtFileVersion>1.2</txtFileVersion>
+								<fileVersion>1.3.0.0</fileVersion>
+								<txtFileVersion>1.3</txtFileVersion>
 								<fileDescription>TLE Decoder</fileDescription>
 								<copyright>Jordi Rocafort</copyright>
-								<productVersion>1.2.0.0</productVersion>
-								<txtProductVersion>1.2</txtProductVersion>
+								<productVersion>1.3.0.0</productVersion>
+								<txtProductVersion>1.3</txtProductVersion>
 								<productName>TLE-Decoder</productName>
 								<internalName>TLE-Decoder</internalName>
 								<originalFilename>TLE-Decoder.exe</originalFilename>
@@ -157,27 +157,6 @@
 						</configuration>
 					</execution>
 				</executions>
-			</plugin>
-			<plugin>
-				<groupId>net.jsign</groupId>
-				<artifactId>jsign-maven-plugin</artifactId>
-				<version>6.0</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>sign</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<file>${project.build.directory}/TLE-Decoder.exe</file>
-					<name>TLE-Decoder</name>
-					<url>https://github.com/Jordi-R66/TLE-Decoder-GUI</url>
-					<keystore>../cert/keystore.jks</keystore>
-					<alias>certif-projets</alias>
-					<storepass>${env.KEYSTORE_PASSWORD}</storepass>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
