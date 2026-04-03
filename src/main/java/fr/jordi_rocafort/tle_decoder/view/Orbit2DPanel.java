@@ -25,7 +25,7 @@ public class Orbit2DPanel extends JPanel {
 
 	private Orbit2DPanel() {
 		this.setBackground(new Color(20, 24, 32));
-		this.setBorder(BorderFactory.createTitledBorder("Orbite 2D (Vue perpendiculaire au plan orbital)"));
+		//this.setBorder(BorderFactory.createTitledBorder("Orbite 2D (Vue perpendiculaire au plan orbital)"));
 	}
 
 	public void updateData(TLE tle, StaticValues init, Coords2D coords) {

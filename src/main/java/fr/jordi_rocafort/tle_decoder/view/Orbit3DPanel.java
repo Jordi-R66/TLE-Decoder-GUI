@@ -35,7 +35,8 @@ public class Orbit3DPanel extends JPanel {
 
 	private Orbit3DPanel() {
 		this.setLayout(new BorderLayout());
-		this.setBorder(BorderFactory.createTitledBorder("Vue 3D Globale (ECI - Anneau fixe & Terre en rotation)"));
+		this.setBorder(BorderFactory.createLineBorder(getBackground(), 3));
+		//this.setBorder(BorderFactory.createTitledBorder("Vue 3D Globale (ECI - Anneau fixe & Terre en rotation)"));
 
 		GraphicsConfiguration config = SimpleUniverse.getPreferredConfiguration();
 		Canvas3D canvas = new Canvas3D(config);

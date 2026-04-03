@@ -33,7 +33,7 @@ public class GroundTrackMapPanel extends JPanel {
 
 	private GroundTrackMapPanel() {
 		this.setBackground(Color.BLACK);
-		this.setBorder(BorderFactory.createTitledBorder("Ground Track (Projection Équirectangulaire)"));
+		//this.setBorder(BorderFactory.createTitledBorder("Ground Track (Projection Équirectangulaire)"));
 
 		// Chargement de l'image de fond
 		mapImage = ResourceManager.getLowResWorldMap();
