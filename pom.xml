@@ -3,10 +3,10 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>fr.jordi-rocafort.tle_decoder</groupId>
-	<artifactId>TLE-Decoder</artifactId>
+	<artifactId>KeplerTrack</artifactId>
 	<packaging>jar</packaging>
 	<version>1.3</version>
-	<name>TLE-Decoder</name>
+	<name>KeplerTrack</name>
 	<url>https://github.com/Jordi-R66/TLE-Decoder-GUI</url>
 
 	<properties>
@@ -129,7 +129,7 @@
 						<configuration>
 							<headerType>gui</headerType>
 							<jar>${project.build.directory}/${project.build.finalName}.jar</jar>
-							<outfile>${project.build.directory}/TLE-Decoder.exe</outfile>
+							<outfile>${project.build.directory}/KeplerTrack.exe</outfile>
 							<downloadUrl>https://java.com/download</downloadUrl>
 							<classPath>
 								<mainClass>fr.jordi_rocafort.tle_decoder.Main</mainClass>
@@ -146,13 +146,13 @@
 							<versionInfo>
 								<fileVersion>1.3.0.0</fileVersion>
 								<txtFileVersion>1.3</txtFileVersion>
-								<fileDescription>TLE Decoder</fileDescription>
+								<fileDescription>KeplerTrack</fileDescription>
 								<copyright>Jordi Rocafort</copyright>
 								<productVersion>1.3.0.0</productVersion>
 								<txtProductVersion>1.3</txtProductVersion>
-								<productName>TLE-Decoder</productName>
-								<internalName>TLE-Decoder</internalName>
-								<originalFilename>TLE-Decoder.exe</originalFilename>
+								<productName>KeplerTrack</productName>
+								<internalName>KeplerTrack</internalName>
+								<originalFilename>KeplerTrack.exe</originalFilename>
 							</versionInfo>
 						</configuration>
 					</execution>

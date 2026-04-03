@@ -16,7 +16,7 @@ public class TleDecoder extends JFrame {
 	private int normalState;
 
 	public TleDecoder() {
-		super("TLE-Decoder");
+		super("KeplerTrack");
 
 		instance = this;
 		dataPanel = DataPanel.getInstance();
