@@ -1,10 +1,12 @@
 package fr.jordi_rocafort.keplertrack.util;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
+import fr.jordi_rocafort.keplertrack.model.data.DateAndTime;
 import fr.jordi_rocafort.keplertrack.model.data.TLE;
 
 public class TimeUtils {
@@ -85,5 +87,19 @@ public class TimeUtils {
 		long seconds = rem % 60L;
 
 		return String.format("%dd %02dh %02dm %02ds", days, hours, minutes, seconds);
+	}
+
+	public static DateAndTime isoTimeToObject(String isoTime) {
+		LocalDateTime dateTime = LocalDateTime.parse(isoTime);
+
+		int year = dateTime.getYear();
+		int dayOfYear = dateTime.getDayOfYear();
+		long nanosOfDay = dateTime.toLocalTime().toNanoOfDay();
+
+		double totalNanosInDay = 86_400_000_000_000.0;
+		double fractionOfDay = nanosOfDay / totalNanosInDay;
+		double absoluteDay = (dayOfYear - 1) + fractionOfDay + 1;
+
+		return new DateAndTime(year, absoluteDay);
 	}
 }

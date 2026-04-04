@@ -1,5 +1,6 @@
 package fr.jordi_rocafort.keplertrack.model.tle;
 
+import fr.jordi_rocafort.keplertrack.model.data.DateAndTime;
 import fr.jordi_rocafort.keplertrack.model.data.TLE;
 import fr.jordi_rocafort.keplertrack.model.data.TleLegacyBlock;
 
@@ -23,6 +24,8 @@ public class TleLegacyParser implements ITleParser<TleLegacyBlock> {
 
 		int epochYear = Integer.parseInt(line1.substring(18, 20).trim());
 		double epochDay = Double.parseDouble(line1.substring(20, 32).trim());
+
+		DateAndTime epoch = new DateAndTime(epochYear, epochDay);
 
 		// Multiplié par 2.0 comme dans le code C
 		double firstDeriv = Double.parseDouble(line1.substring(33, 43).trim()) * 2.0;
@@ -65,8 +68,7 @@ public class TleLegacyParser implements ITleParser<TleLegacyBlock> {
 				cosparYear,
 				cosparLaunchNum,
 				cosparPiece,
-				epochYear,
-				epochDay,
+				epoch,
 				firstDeriv,
 				secondDeriv,
 				bStar,

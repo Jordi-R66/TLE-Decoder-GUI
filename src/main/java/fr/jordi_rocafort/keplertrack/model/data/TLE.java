@@ -9,8 +9,7 @@ public record TLE(
 		int cosparLaunchNum,
 		String cosparPiece,
 
-		int epochYear,
-		double epochDay,
+		DateAndTime epoch,
 
 		double firstDerivMeanMotion,
 		double secondDerivMeanMotion,
@@ -25,4 +24,7 @@ public record TLE(
 
 		int revolutionNumber
 	) {
+
+	public int epochYear() { return epoch.year(); }
+	public double epochDay() { return epoch.day(); }
 }

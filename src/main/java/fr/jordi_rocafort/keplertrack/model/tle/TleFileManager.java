@@ -6,10 +6,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import fr.jordi_rocafort.keplertrack.model.data.TLE;
-import fr.jordi_rocafort.keplertrack.model.data.TleLegacyBlock;
+import fr.jordi_rocafort.keplertrack.model.data.TleCsvBlock;
+import fr.jordi_rocafort.keplertrack.model.data.TleRawData;
 
 public class TleFileManager {
-	private final ITleParser parser;
+	private final ITleParser<TleRawData> parser;
 
 	// Équivalent de #define TLE_BLOCK_SIZE sizeof(tle_block) (25 + 70 + 70 = 165)
 	private final int TLE_BLOCK_SIZE = 165;
@@ -30,7 +31,7 @@ public class TleFileManager {
 	/**
 	 * Équivalent de getBlockByIndex(FILE* fp, long index)
 	 */
-	public TleLegacyBlock getBlockByIndex(RandomAccessFile fp, long index) throws Exception {
+	public TleCsvBlock getBlockByIndex(RandomAccessFile fp, long index) throws Exception {
 		// fseek(fp, new_pos, SEEK_SET);
 		long newPos = TLE_BLOCK_SIZE * index;
 		fp.seek(newPos);
@@ -49,17 +50,17 @@ public class TleFileManager {
 		String secondLine = new String(secondLineBytes, StandardCharsets.UTF_8).trim();
 		String thirdLine = new String(thirdLineBytes, StandardCharsets.UTF_8).trim();
 
-		return new TleLegacyBlock(firstLine, secondLine, thirdLine);
+		return new TleCsvBlock(firstLine, secondLine, thirdLine);
 	}
 
-	public String readObjectNameFromBlock(TleLegacyBlock block) {
+	public String readObjectNameFromBlock(TleCsvBlock block) {
 		return block.firstLine().trim();
 	}
 
 	/**
 	 * Équivalent de readNoradIdFromBlock(tle_block* block)
 	 */
-	public int readNoradIdFromBlock(TleLegacyBlock block) {
+	public int readNoradIdFromBlock(TleCsvBlock block) {
 		// L'équivalent de la boucle for (i < 5) qui récupère SECOND_LINE[i + 2]
 		String noradCat = block.secondLine().substring(2, 7).trim();
 		return Integer.parseInt(noradCat);
@@ -74,7 +75,7 @@ public class TleFileManager {
 				outputList.ensureCapacity(tleCount < Integer.MAX_VALUE ? (int) tleCount : Integer.MAX_VALUE);
 
 				for (long i = 0; i < tleCount; i++) {
-					TleLegacyBlock block = getBlockByIndex(fp, i);
+					TleCsvBlock block = getBlockByIndex(fp, i);
 					int noradId = readNoradIdFromBlock(block);
 					String objName = readObjectNameFromBlock(block);
 
@@ -105,7 +106,7 @@ public class TleFileManager {
 
 			boolean found = false;
 			long i = 0;
-			TleLegacyBlock tempBlock = null;
+			TleCsvBlock tempBlock = null;
 
 			while (!found && i < tleCount) {
 				tempBlock = getBlockByIndex(fp, i);

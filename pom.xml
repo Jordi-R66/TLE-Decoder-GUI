@@ -107,7 +107,7 @@
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>fr.jordi_rocafort.tle_decoder.Main</mainClass>
+									<mainClass>fr.jordi_rocafort.keplertrack.Main</mainClass>
 								</transformer>
 							</transformers>
 							<createDependencyReducedPom>false</createDependencyReducedPom>

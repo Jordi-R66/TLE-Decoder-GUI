@@ -92,7 +92,7 @@ public class DecodeController implements ActionListener {
 
 			System.out.println("Lancement du décodage pour le texte manuel :\n" + tleText);
 
-			TleLegacyBlock tempBlock = TleLegacyBlock.fromRawBlock(tleText);
+			TleCsvBlock tempBlock = TleCsvBlock.fromRawBlock(tleText);
 
 			if (tempBlock != null) {
 				tle = ITleParser.parseLines(tempBlock);
