@@ -1,14 +1,14 @@
 package fr.jordi_rocafort.keplertrack.model.tle;
 
 import fr.jordi_rocafort.keplertrack.model.data.TLE;
-import fr.jordi_rocafort.keplertrack.model.data.TleBlock;
+import fr.jordi_rocafort.keplertrack.model.data.TleLegacyBlock;
 
 public class TleParser {
 
 	/**
 	 * Parse un bloc de 3 lignes de texte pour générer un objet TLE immuable.
 	 */
-	public static TLE parseLines(TleBlock block) {
+	public static TLE parseLines(TleLegacyBlock block) {
 		String nameLine = block.firstLine().trim();
 		String line1 = block.secondLine();
 		String line2 = block.thirdLine();

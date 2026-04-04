@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import fr.jordi_rocafort.keplertrack.model.data.TLE;
-import fr.jordi_rocafort.keplertrack.model.data.TleBlock;
+import fr.jordi_rocafort.keplertrack.model.data.TleLegacyBlock;
 
 public class TleFileManager {
 
@@ -27,7 +27,7 @@ public class TleFileManager {
 	/**
 	 * Équivalent de getBlockByIndex(FILE* fp, long index)
 	 */
-	public static TleBlock getBlockByIndex(RandomAccessFile fp, long index) throws Exception {
+	public static TleLegacyBlock getBlockByIndex(RandomAccessFile fp, long index) throws Exception {
 		// fseek(fp, new_pos, SEEK_SET);
 		long newPos = TLE_BLOCK_SIZE * index;
 		fp.seek(newPos);
@@ -46,17 +46,17 @@ public class TleFileManager {
 		String secondLine = new String(secondLineBytes, StandardCharsets.UTF_8).trim();
 		String thirdLine = new String(thirdLineBytes, StandardCharsets.UTF_8).trim();
 
-		return new TleBlock(firstLine, secondLine, thirdLine);
+		return new TleLegacyBlock(firstLine, secondLine, thirdLine);
 	}
 
-	public static String readObjectNameFromBlock(TleBlock block) {
+	public static String readObjectNameFromBlock(TleLegacyBlock block) {
 		return block.firstLine().trim();
 	}
 
 	/**
 	 * Équivalent de readNoradIdFromBlock(tle_block* block)
 	 */
-	public static int readNoradIdFromBlock(TleBlock block) {
+	public static int readNoradIdFromBlock(TleLegacyBlock block) {
 		// L'équivalent de la boucle for (i < 5) qui récupère SECOND_LINE[i + 2]
 		String noradCat = block.secondLine().substring(2, 7).trim();
 		return Integer.parseInt(noradCat);
@@ -71,7 +71,7 @@ public class TleFileManager {
 				outputList.ensureCapacity(tleCount < Integer.MAX_VALUE ? (int)tleCount : Integer.MAX_VALUE);
 
 				for (long i = 0; i < tleCount; i++) {
-					TleBlock block = getBlockByIndex(fp, i);
+					TleLegacyBlock block = getBlockByIndex(fp, i);
 					int noradId = readNoradIdFromBlock(block);
 					String objName = readObjectNameFromBlock(block);
 
@@ -102,7 +102,7 @@ public class TleFileManager {
 
 			boolean found = false;
 			long i = 0;
-			TleBlock tempBlock = null;
+			TleLegacyBlock tempBlock = null;
 
 			while (!found && i < tleCount) {
 				tempBlock = getBlockByIndex(fp, i);
