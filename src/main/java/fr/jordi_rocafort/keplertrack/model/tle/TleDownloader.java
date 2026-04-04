@@ -22,7 +22,8 @@ import java.net.URI;
 
 public class TleDownloader {
 	private static final String USER_AGENT = "TLE-Decoder/1.0 (See https://github.com/Jordi-R66/TLE-Decoder-GUI)";
-	private static final String BASE_URL = "https://celestrak.org/NORAD/elements/gp.php?GROUP=SET_NAME&FORMAT=tle";
+	private static final String BASE_URL = "https://celestrak.org/NORAD/elements/gp.php?GROUP=SET_NAME&FORMAT=FORMAT_NAME";
+
 	public static final ArrayList<String> datasets = new ArrayList<String>(
 			Arrays.asList(new String[] {
 					"active", "stations", "last-30-days", "visual", "analyst", "cosmos-1408-debris",
@@ -34,9 +35,10 @@ public class TleDownloader {
 					"engineering", "education", "military", "radar", "cubesat", "other"
 			}));
 
-	private static int downloadTleSet(HttpClient client, String datasetName) {
+	private static int downloadTleSet(HttpClient client, String datasetName, TleFormat format) {
 		int statusCode = 0;
-		URI uri = URI.create(BASE_URL.replace("SET_NAME", datasetName));
+		String formatString = format.getFormatString();
+		URI uri = URI.create(BASE_URL.replace("SET_NAME", datasetName).replace("FORMAT_NAME", formatString));
 
 		HttpRequest req;
 		HttpResponse<String> response;
@@ -52,7 +54,7 @@ public class TleDownloader {
 					boolean remakeRequest = response.body().contains("not found");
 
 					if (remakeRequest) {
-						uri = URI.create(BASE_URL.replace("SET_NAME", datasetName).replace("GROUP", "SPECIAL"));
+						uri = URI.create(BASE_URL.replace("SET_NAME", datasetName).replace("GROUP", "SPECIAL").replace("FORMAT_NAME", formatString));
 						req = HttpRequest.newBuilder().uri(uri).header("User-Agent", USER_AGENT).GET().build();
 						response = client.send(req, HttpResponse.BodyHandlers.ofString());
 						statusCode = response.statusCode();
@@ -60,7 +62,7 @@ public class TleDownloader {
 
 					if (!remakeRequest || (remakeRequest && statusCode == 200)) {
 						String content = response.body();
-						Path chemin = Paths.get(String.format("TLEs/%s.tle", datasetName));
+						Path chemin = Paths.get(String.format("TLEs/%s.%s", datasetName, formatString));
 
 						System.out.println(chemin);
 
@@ -80,7 +82,7 @@ public class TleDownloader {
 		int statusCode = 0;
 
 		try (HttpClient client = HttpClient.newHttpClient()) {
-			statusCode = downloadTleSet(client, datasetName);
+			statusCode = downloadTleSet(client, datasetName, TleFormat.LEGACY);
 		} catch (Exception e) {
 			statusCode = -1;
 		}
@@ -102,7 +104,7 @@ public class TleDownloader {
 				int statusCode = 0;
 
 				for (String datasetName : datasets) {
-					statusCode = downloadTleSet(client, datasetName);
+					statusCode = downloadTleSet(client, datasetName, TleFormat.LEGACY);
 
 					if (statusCode != 200) {
 						output.add(datasetName);
