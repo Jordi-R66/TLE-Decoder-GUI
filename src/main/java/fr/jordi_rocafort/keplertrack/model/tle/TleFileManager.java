@@ -6,33 +6,27 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import fr.jordi_rocafort.keplertrack.model.data.TLE;
-import fr.jordi_rocafort.keplertrack.model.data.TleCsvBlock;
-import fr.jordi_rocafort.keplertrack.model.data.TleRawData;
+import fr.jordi_rocafort.keplertrack.model.data.TleLegacyBlock; // Modification ici
 
 public class TleFileManager {
-	private final ITleParser<TleRawData> parser;
+	// Création d'une instance statique de parser
+	private static final TleLegacyParser parser = new TleLegacyParser();
 
-	// Équivalent de #define TLE_BLOCK_SIZE sizeof(tle_block) (25 + 70 + 70 = 165)
-	private final int TLE_BLOCK_SIZE = 165;
+	// Rendu statique
+	private static final int TLE_BLOCK_SIZE = 165;
 
-	private HashMap<String, ArrayList<BlockInformation>> associations = new HashMap<>();
+	// Rendu statique
+	private static HashMap<String, ArrayList<BlockInformation>> associations = new HashMap<>();
 
-	public HashMap<String, ArrayList<BlockInformation>> getAssociations() {
+	public static HashMap<String, ArrayList<BlockInformation>> getAssociations() {
 		return associations;
 	}
 
-	/**
-	 * Équivalent de GetTLENumber(FILE* fp)
-	 */
-	public long getTleNumber(RandomAccessFile fp) throws Exception {
+	public static long getTleNumber(RandomAccessFile fp) throws Exception {
 		return fp.length() / TLE_BLOCK_SIZE;
 	}
 
-	/**
-	 * Équivalent de getBlockByIndex(FILE* fp, long index)
-	 */
-	public TleCsvBlock getBlockByIndex(RandomAccessFile fp, long index) throws Exception {
-		// fseek(fp, new_pos, SEEK_SET);
+	public static TleLegacyBlock getBlockByIndex(RandomAccessFile fp, long index) throws Exception {
 		long newPos = TLE_BLOCK_SIZE * index;
 		fp.seek(newPos);
 
@@ -40,33 +34,28 @@ public class TleFileManager {
 		byte[] secondLineBytes = new byte[70];
 		byte[] thirdLineBytes = new byte[70];
 
-		// fread(&output, TLE_BLOCK_SIZE, 1, fp);
 		fp.readFully(firstLineBytes);
 		fp.readFully(secondLineBytes);
 		fp.readFully(thirdLineBytes);
 
-		// Enlève les caractères de fin de chaîne (\0) ou retours à la ligne avec trim()
 		String firstLine = new String(firstLineBytes, StandardCharsets.UTF_8).trim();
 		String secondLine = new String(secondLineBytes, StandardCharsets.UTF_8).trim();
 		String thirdLine = new String(thirdLineBytes, StandardCharsets.UTF_8).trim();
 
-		return new TleCsvBlock(firstLine, secondLine, thirdLine);
+		// TleLegacyBlock prend bien 3 arguments
+		return new TleLegacyBlock(firstLine, secondLine, thirdLine);
 	}
 
-	public String readObjectNameFromBlock(TleCsvBlock block) {
+	public static String readObjectNameFromBlock(TleLegacyBlock block) {
 		return block.firstLine().trim();
 	}
 
-	/**
-	 * Équivalent de readNoradIdFromBlock(tle_block* block)
-	 */
-	public int readNoradIdFromBlock(TleCsvBlock block) {
-		// L'équivalent de la boucle for (i < 5) qui récupère SECOND_LINE[i + 2]
+	public static int readNoradIdFromBlock(TleLegacyBlock block) {
 		String noradCat = block.secondLine().substring(2, 7).trim();
 		return Integer.parseInt(noradCat);
 	}
 
-	public ArrayList<BlockInformation> getAllNoradIDs(String filePath) throws Exception {
+	public static ArrayList<BlockInformation> getAllNoradIDs(String filePath) throws Exception {
 		ArrayList<BlockInformation> outputList = new ArrayList<>();
 
 		if (!associations.containsKey(filePath)) {
@@ -75,7 +64,7 @@ public class TleFileManager {
 				outputList.ensureCapacity(tleCount < Integer.MAX_VALUE ? (int) tleCount : Integer.MAX_VALUE);
 
 				for (long i = 0; i < tleCount; i++) {
-					TleCsvBlock block = getBlockByIndex(fp, i);
+					TleLegacyBlock block = getBlockByIndex(fp, i);
 					int noradId = readNoradIdFromBlock(block);
 					String objName = readObjectNameFromBlock(block);
 
@@ -95,18 +84,14 @@ public class TleFileManager {
 		return outputList;
 	}
 
-	/**
-	 * Équivalent de GetSingleTLE(FILE* fp, uint32_t noradId)
-	 */
-	public TLE getSingleTLE(String filePath, int targetNoradId) throws Exception {
-		// RandomAccessFile "r" est l'équivalent de fopen(..., "r")
+	public static TLE getSingleTLE(String filePath, int targetNoradId) throws Exception {
 		try (RandomAccessFile fp = new RandomAccessFile(filePath, "r")) {
 			long tleCount = getTleNumber(fp);
 			System.out.println("Counted the TLEs (" + tleCount + ")");
 
 			boolean found = false;
 			long i = 0;
-			TleCsvBlock tempBlock = null;
+			TleLegacyBlock tempBlock = null;
 
 			while (!found && i < tleCount) {
 				tempBlock = getBlockByIndex(fp, i);
@@ -125,11 +110,10 @@ public class TleFileManager {
 			}
 
 			if (found && tempBlock != null) {
-				return parser.parseLines(tempBlock); // Équivalent de parse_block(&tempBlock)
+				return parser.parseLines(tempBlock);
 			}
 		}
 
-		// Si on sort de la boucle sans rien trouver
 		throw new IllegalArgumentException("Satellite " + targetNoradId + " introuvable dans " + filePath);
 	}
 }
