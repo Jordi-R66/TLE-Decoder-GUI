@@ -5,7 +5,7 @@ import javax.swing.*;
 import fr.jordi_rocafort.keplertrack.model.data.*;
 import fr.jordi_rocafort.keplertrack.model.physics.OrbitPropagator;
 import fr.jordi_rocafort.keplertrack.model.tle.TleFileManager;
-import fr.jordi_rocafort.keplertrack.model.tle.TleParser;
+import fr.jordi_rocafort.keplertrack.model.tle.ITleParser;
 import fr.jordi_rocafort.keplertrack.view.*;
 
 import java.awt.event.ActionEvent;
@@ -95,7 +95,7 @@ public class DecodeController implements ActionListener {
 			TleLegacyBlock tempBlock = TleLegacyBlock.fromRawBlock(tleText);
 
 			if (tempBlock != null) {
-				tle = TleParser.parseLines(tempBlock);
+				tle = ITleParser.parseLines(tempBlock);
 				init = OrbitPropagator.computeStaticPhase(tle);
 			} else {
 				JOptionPane.showMessageDialog(inputPanel, "Vérifiez avoir saisie une 3LE", "Erreur",

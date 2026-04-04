@@ -9,25 +9,28 @@ import fr.jordi_rocafort.keplertrack.model.data.TLE;
 import fr.jordi_rocafort.keplertrack.model.data.TleLegacyBlock;
 
 public class TleFileManager {
+	private final ITleParser parser;
 
 	// Équivalent de #define TLE_BLOCK_SIZE sizeof(tle_block) (25 + 70 + 70 = 165)
-	private static final int TLE_BLOCK_SIZE = 165;
+	private final int TLE_BLOCK_SIZE = 165;
 
-	private static HashMap<String, ArrayList<BlockInformation>> associations = new HashMap<>();
+	private HashMap<String, ArrayList<BlockInformation>> associations = new HashMap<>();
 
-	public static HashMap<String, ArrayList<BlockInformation>> getAssociations() { return associations; }
+	public HashMap<String, ArrayList<BlockInformation>> getAssociations() {
+		return associations;
+	}
 
 	/**
 	 * Équivalent de GetTLENumber(FILE* fp)
 	 */
-	public static long getTleNumber(RandomAccessFile fp) throws Exception {
+	public long getTleNumber(RandomAccessFile fp) throws Exception {
 		return fp.length() / TLE_BLOCK_SIZE;
 	}
 
 	/**
 	 * Équivalent de getBlockByIndex(FILE* fp, long index)
 	 */
-	public static TleLegacyBlock getBlockByIndex(RandomAccessFile fp, long index) throws Exception {
+	public TleLegacyBlock getBlockByIndex(RandomAccessFile fp, long index) throws Exception {
 		// fseek(fp, new_pos, SEEK_SET);
 		long newPos = TLE_BLOCK_SIZE * index;
 		fp.seek(newPos);
@@ -49,26 +52,26 @@ public class TleFileManager {
 		return new TleLegacyBlock(firstLine, secondLine, thirdLine);
 	}
 
-	public static String readObjectNameFromBlock(TleLegacyBlock block) {
+	public String readObjectNameFromBlock(TleLegacyBlock block) {
 		return block.firstLine().trim();
 	}
 
 	/**
 	 * Équivalent de readNoradIdFromBlock(tle_block* block)
 	 */
-	public static int readNoradIdFromBlock(TleLegacyBlock block) {
+	public int readNoradIdFromBlock(TleLegacyBlock block) {
 		// L'équivalent de la boucle for (i < 5) qui récupère SECOND_LINE[i + 2]
 		String noradCat = block.secondLine().substring(2, 7).trim();
 		return Integer.parseInt(noradCat);
 	}
 
-	public static ArrayList<BlockInformation> getAllNoradIDs(String filePath) throws Exception {
+	public ArrayList<BlockInformation> getAllNoradIDs(String filePath) throws Exception {
 		ArrayList<BlockInformation> outputList = new ArrayList<>();
 
 		if (!associations.containsKey(filePath)) {
 			try (RandomAccessFile fp = new RandomAccessFile(filePath, "r")) {
-				long tleCount = (long)getTleNumber(fp);
-				outputList.ensureCapacity(tleCount < Integer.MAX_VALUE ? (int)tleCount : Integer.MAX_VALUE);
+				long tleCount = (long) getTleNumber(fp);
+				outputList.ensureCapacity(tleCount < Integer.MAX_VALUE ? (int) tleCount : Integer.MAX_VALUE);
 
 				for (long i = 0; i < tleCount; i++) {
 					TleLegacyBlock block = getBlockByIndex(fp, i);
@@ -94,7 +97,7 @@ public class TleFileManager {
 	/**
 	 * Équivalent de GetSingleTLE(FILE* fp, uint32_t noradId)
 	 */
-	public static TLE getSingleTLE(String filePath, int targetNoradId) throws Exception {
+	public TLE getSingleTLE(String filePath, int targetNoradId) throws Exception {
 		// RandomAccessFile "r" est l'équivalent de fopen(..., "r")
 		try (RandomAccessFile fp = new RandomAccessFile(filePath, "r")) {
 			long tleCount = getTleNumber(fp);
@@ -121,7 +124,7 @@ public class TleFileManager {
 			}
 
 			if (found && tempBlock != null) {
-				return TleParser.parseLines(tempBlock); // Équivalent de parse_block(&tempBlock)
+				return parser.parseLines(tempBlock); // Équivalent de parse_block(&tempBlock)
 			}
 		}
 

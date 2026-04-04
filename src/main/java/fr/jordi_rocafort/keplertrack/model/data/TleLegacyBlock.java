@@ -1,6 +1,6 @@
 package fr.jordi_rocafort.keplertrack.model.data;
 
-public record TleLegacyBlock(String firstLine, String secondLine, String thirdLine) {
+public record TleLegacyBlock(String firstLine, String secondLine, String thirdLine) implements TleRawData {
 	public static TleLegacyBlock fromRawBlock(String rawBlock) {
 		TleLegacyBlock output = null;
 
