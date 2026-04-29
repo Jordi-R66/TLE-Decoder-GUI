@@ -92,7 +92,7 @@ public class TimeUtils {
 	public static DateAndTime isoTimeToObject(String isoTime) {
 		LocalDateTime dateTime = LocalDateTime.parse(isoTime);
 
-		int year = dateTime.getYear();
+		int year = dateTime.getYear() % 100;
 		int dayOfYear = dateTime.getDayOfYear();
 		long nanosOfDay = dateTime.toLocalTime().toNanoOfDay();
 

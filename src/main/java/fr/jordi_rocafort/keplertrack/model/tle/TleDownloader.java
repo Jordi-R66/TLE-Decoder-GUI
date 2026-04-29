@@ -53,11 +53,14 @@ public class TleDownloader {
 				if (statusCode == 200) {
 					boolean remakeRequest = response.body().contains("not found");
 
-					if (remakeRequest) {
-						uri = URI.create(BASE_URL.replace("SET_NAME", datasetName).replace("GROUP", "SPECIAL").replace("FORMAT_NAME", formatString));
+					if (remakeRequest && format == TleFormat.LEGACY) {
+						uri = URI.create(BASE_URL.replace("SET_NAME", datasetName).replace("GROUP", "SPECIAL")
+								.replace("FORMAT_NAME", formatString));
 						req = HttpRequest.newBuilder().uri(uri).header("User-Agent", USER_AGENT).GET().build();
 						response = client.send(req, HttpResponse.BodyHandlers.ofString());
 						statusCode = response.statusCode();
+					} else if (remakeRequest && (format != TleFormat.LEGACY)) {
+						statusCode = 0;
 					}
 
 					if (!remakeRequest || (remakeRequest && statusCode == 200)) {
@@ -82,7 +85,7 @@ public class TleDownloader {
 		int statusCode = 0;
 
 		try (HttpClient client = HttpClient.newHttpClient()) {
-			statusCode = downloadTleSet(client, datasetName, TleFormat.LEGACY);
+			statusCode = downloadTleSet(client, datasetName, TleFormat.CSV);
 		} catch (Exception e) {
 			statusCode = -1;
 		}
@@ -96,7 +99,7 @@ public class TleDownloader {
 	 * @param datasets
 	 * @return The list of sets that couldn't be downloaded
 	 */
-	public static ArrayList<String> downloadTleSets(List<String> datasets) {
+	public static ArrayList<String> downloadTleSets(List<String> datasets, TleFormat format) {
 		ArrayList<String> output = new ArrayList<>();
 
 		if (TleDownloader.datasets.containsAll(datasets)) {
@@ -104,7 +107,7 @@ public class TleDownloader {
 				int statusCode = 0;
 
 				for (String datasetName : datasets) {
-					statusCode = downloadTleSet(client, datasetName, TleFormat.LEGACY);
+					statusCode = downloadTleSet(client, datasetName, format);
 
 					if (statusCode != 200) {
 						output.add(datasetName);
@@ -125,7 +128,7 @@ public class TleDownloader {
 	 * @param datasets
 	 * @return The list of sets that couldn't be downloaded
 	 */
-	public static ArrayList<String> downloadTleSets(List<String> datasets, int threads) {
+	public static ArrayList<String> downloadTleSets(List<String> datasets, TleFormat format, int threads) {
 		ArrayList<String> output = new ArrayList<>();
 
 		if (TleDownloader.datasets.containsAll(datasets)) {
@@ -142,7 +145,7 @@ public class TleDownloader {
 				int end = Math.min(totalSize, i + chunkSize);
 				List<String> subList = datasets.subList(i, end);
 
-				tasks.add(() -> downloadTleSets(subList));
+				tasks.add(() -> downloadTleSets(subList, format));
 			}
 
 			try {
@@ -161,98 +164,134 @@ public class TleDownloader {
 		return output;
 	}
 
-	public static ArrayList<String> downloadAllTles(int threads) {
-		return downloadTleSets(datasets, threads);
+	public static ArrayList<String> downloadAllTles(int threads, TleFormat format) {
+		return downloadTleSets(datasets, format, threads);
 	}
 
-	public static ArrayList<String> downloadAllTles() {
-		return downloadTleSets(datasets, 1);
+	public static ArrayList<String> downloadAllTles(TleFormat format) {
+		return downloadTleSets(datasets, format, 1);
 	}
-
 
 	/**
-	 * Fusionne tous les fichiers TLE téléchargés en un seul fichier "merged.tle",
-	 * en excluant les doublons (via le NORAD ID) et les satellites "UNKNOWN".
+	 * Fusionne tous les fichiers téléchargés du format spécifié en un seul fichier
+	 * "merged.tle" ou "merged.csv", en excluant les doublons (via le NORAD ID)
+	 * et les satellites "UNKNOWN".
+	 * * @param format Le format de fichiers à fusionner (TleFormat.LEGACY ou TleFormat.CSV)
 	 */
-	public static void mergeAllTles() {
-		Path mergedFilePath = Paths.get("TLEs/merged.tle");
+	public static void mergeAllTles(TleFormat format) {
+		boolean isCsv = (format == TleFormat.CSV);
+		String extension = format.getFormatString(); // Récupère "tle" ou "csv" depuis l'Enum
+		Path mergedPath = Paths.get("TLEs/merged." + extension);
 
-		// Un HashSet est parfait ici : il empêche les doublons et la vérification
-		// "contains" est quasi instantanée
+		// Un seul HashSet pour stocker les IDs traités
 		HashSet<Integer> mergedIds = new HashSet<>();
 
 		long totalTime = 0;
 
 		try {
-			Files.createDirectories(mergedFilePath.getParent());
+			Files.createDirectories(mergedPath.getParent());
 
-			try (BufferedWriter writer = Files.newBufferedWriter(mergedFilePath, StandardCharsets.UTF_8)) {
+			// On n'ouvre qu'un seul writer pour le format cible
+			try (BufferedWriter writer = Files.newBufferedWriter(mergedPath, StandardCharsets.UTF_8)) {
 
-				// On boucle sur la liste déjà existante dans TleDownloader
+				// Si c'est un CSV, on commence par écrire l'en-tête
+				if (isCsv) {
+					String csvHeader = "OBJECT_NAME,OBJECT_ID,EPOCH,MEAN_MOTION,ECCENTRICITY,INCLINATION,RA_OF_ASC_NODE,ARG_OF_PERICENTER,MEAN_ANOMALY,EPHEMERIS_TYPE,CLASSIFICATION_TYPE,NORAD_CAT_ID,ELEMENT_SET_NO,REV_AT_EPOCH,BSTAR,MEAN_MOTION_DOT,MEAN_MOTION_DDOT";
+					writer.write(csvHeader + "\n");
+				}
+
 				for (String setName : TleDownloader.datasets) {
-					System.out.println("Merging " + setName + ".tle");
 					long start = System.nanoTime();
+					boolean processedAnything = false;
 
-					Path currentFilePath = Paths.get("TLEs/" + setName + ".tle");
+					// Le chemin cible utilise l'extension dynamique
+					Path filePath = Paths.get("TLEs/" + setName + "." + extension);
 
-					if (!Files.exists(currentFilePath)) {
-						System.out.println("Fichier " + setName + ".tle introuvable, ignoré.");
-						continue;
-					}
+					if (Files.exists(filePath)) {
+						try (BufferedReader reader = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)) {
+							
+							if (isCsv) {
+								// === LOGIQUE DE PARSING CSV ===
+								String line;
+								boolean isFirstLine = true;
 
-					try (BufferedReader reader = Files.newBufferedReader(currentFilePath, StandardCharsets.UTF_8)) {
-						String line0, line1, line2;
+								while ((line = reader.readLine()) != null) {
+									// On saute l'en-tête de chaque fichier individuel
+									if (isFirstLine) {
+										isFirstLine = false;
+										continue;
+									}
 
-						while ((line0 = reader.readLine()) != null &&
-								(line1 = reader.readLine()) != null &&
-								(line2 = reader.readLine()) != null) {
+									String[] fields = line.split(",");
+									if (fields.length > 11) {
+										try {
+											// Ajout du .trim() pour corriger les éventuels espaces
+											int noradId = Integer.parseInt(fields[11].trim());
+											String objName = fields[0];
 
-							if (line2.length() < 7)
-								continue;
+											if (!mergedIds.contains(noradId) && !objName.contains("UNKNOWN")) {
+												mergedIds.add(noradId);
+												writer.write(line + "\n");
+											}
+										} catch (NumberFormatException e) {
+											continue;
+										}
+									}
+								}
+							} else {
+								// === LOGIQUE DE PARSING LEGACY (TLE) ===
+								String line0, line1, line2;
 
-							int noradId;
-							try {
-								noradId = Integer.parseInt(line2.substring(2, 7).trim());
-							} catch (NumberFormatException e) {
-								continue;
-							}
+								while ((line0 = reader.readLine()) != null &&
+										(line1 = reader.readLine()) != null &&
+										(line2 = reader.readLine()) != null) {
 
-							// Si l'ID n'est pas déjà dans le Set ET que le nom n'est pas "UNKNOWN"
-							if (!mergedIds.contains(noradId) && !line0.contains("UNKNOWN")) {
-								mergedIds.add(noradId);
+									if (line2.length() < 7)
+										continue;
 
-								// Écriture du bloc en forçant le line separator LF (\n)
-								writer.write(line0 + "\n");
-								writer.write(line1 + "\n");
-								writer.write(line2 + "\n");
+									try {
+										int noradId = Integer.parseInt(line2.substring(2, 7).trim());
+										if (!mergedIds.contains(noradId) && !line0.contains("UNKNOWN")) {
+											mergedIds.add(noradId);
+											writer.write(line0 + "\n");
+											writer.write(line1 + "\n");
+											writer.write(line2 + "\n");
+										}
+									} catch (NumberFormatException e) {
+										continue;
+									}
+								}
 							}
 						}
+						processedAnything = true;
 					}
 
 					long end = System.nanoTime();
 					long execTime = end - start;
 					totalTime += execTime;
 
-					System.out.printf("%s.tle merged in %.3fs\n", setName, execTime / 1_000_000_000.0);
+					if (processedAnything) {
+						System.out.printf("%s.%s datasets merged in %.3fs\n", setName, extension, execTime / 1_000_000_000.0);
+					}
 				}
 			}
 
-			System.out.printf("All files have been merged in %.3fs\n", totalTime / 1_000_000_000.0);
+			System.out.printf("All %s files have been merged in %.3fs\n", extension, totalTime / 1_000_000_000.0);
 
 		} catch (Exception e) {
-			System.err.println("Erreur lors de la fusion des fichiers TLE : " + e.getMessage());
+			System.err.println("Erreur lors de la fusion des fichiers : " + e.getMessage());
 			e.printStackTrace();
 		}
 	}
 
-	public static ArrayList<String> downloadAndMergeAllTles(int threads) {
-		ArrayList<String> output = downloadAllTles(threads);
-		mergeAllTles();
+	public static ArrayList<String> downloadAndMergeAllTles(int threads, TleFormat format) {
+		ArrayList<String> output = downloadAllTles(threads, format);
+		mergeAllTles(format);
 
 		return output;
 	}
 
-	public static ArrayList<String> downloadAndMergeAllTles() {
-		return downloadAllTles(1);
+	public static ArrayList<String> downloadAndMergeAllTles(TleFormat format) {
+		return downloadAllTles(1, format);
 	}
 }

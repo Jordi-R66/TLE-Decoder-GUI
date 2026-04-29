@@ -56,7 +56,7 @@ public class Main {
 	public static void main(String[] args) {
 		// Force l'affichage des nombres avec un point "." au lieu d'une virgule "," (format anglo-saxon)
 		Locale.setDefault(Locale.US);
-		//TleDownloader.downloadAndMergeAllTles(4);
+		//TleDownloader.downloadAndMergeAllTles(4, TleFormat.CSV);
 		guiMode();
 	}
 

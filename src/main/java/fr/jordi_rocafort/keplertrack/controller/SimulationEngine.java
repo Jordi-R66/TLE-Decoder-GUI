@@ -52,7 +52,7 @@ public class SimulationEngine {
 
 				// 2. Mise à jour de la TRACE FUTURE (Toutes les 10 secondes)
 				if (currentTimestamp - lastFutureTrackUpdate >= 10) {
-					long duration = (long) 24 * 3600;
+					long duration = (long) 6 * 3600;
 					long endTs = currentTimestamp + duration;
 					long step = 60L;
 

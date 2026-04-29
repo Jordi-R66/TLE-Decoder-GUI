@@ -17,15 +17,17 @@ public class TleCsvParser implements ITleParser<TleCsvBlock> {
 		String cosparWhole = fields[1];
 
 		String[] splitCospar = cosparWhole.split("-");
-		String cosparYrStr = splitCospar[0], cosparLaunchNumStr = splitCospar[1].substring(0, 2),
-				cosparPiece = splitCospar[1].substring(3);
+		// Le numéro de lancement fait toujours 3 caractères, le reste c'est la pièce
+		String cosparLaunchNumStr = splitCospar[1].substring(0, 3);
+		String cosparPiece = splitCospar[1].substring(3);
 
 		// --------------------------- 1-ST LINE PARSING ---------------------------
 
 		int noradId = Integer.parseInt(fields[11]);
 		char classification = fields[10].charAt(0);
 
-		int cosparYear = Integer.parseInt(cosparYrStr);
+		// On modulo 100 pour transformer 2024 en 24, ou 1982 en 82
+		int cosparYear = Integer.parseInt(splitCospar[0]) % 100;
 		int cosparLaunchNum = Integer.parseInt(cosparLaunchNumStr);
 
 		DateAndTime epoch = TimeUtils.isoTimeToObject(fields[2]);

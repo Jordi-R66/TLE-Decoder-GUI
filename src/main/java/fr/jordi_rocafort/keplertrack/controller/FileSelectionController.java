@@ -75,7 +75,15 @@ public class FileSelectionController implements ActionListener {
 
 		fileChooser.setCurrentDirectory(defaultDir);
 		fileChooser.setDialogTitle("Sélectionner un fichier TLE");
-		fileChooser.setFileFilter(new FileNameExtensionFilter("Fichiers texte/TLE (*.txt, *.tle)", "txt", "tle"));
+		FileNameExtensionFilter tleFilter = new FileNameExtensionFilter("Fichiers 3LE (*.tle)", "tle", "3le");
+		FileNameExtensionFilter csvFilter = new FileNameExtensionFilter("Fichiers CSV (*.csv)", "csv");
+
+		fileChooser.addChoosableFileFilter(tleFilter);
+		fileChooser.addChoosableFileFilter(csvFilter);
+
+		// On définit le filtre TLE comme celui sélectionné par défaut à l'ouverture
+		fileChooser.setFileFilter(tleFilter);
+		fileChooser.setAcceptAllFileFilterUsed(false);
 
 		int userSelection = fileChooser.showOpenDialog(inputPanel);
 
@@ -158,7 +166,7 @@ public class FileSelectionController implements ActionListener {
 		SwingWorker<Void, Void> worker = new SwingWorker<>() {
 			@Override
 			protected Void doInBackground() throws Exception {
-				TleDownloader.downloadAndMergeAllTles(4);
+				TleDownloader.downloadAndMergeAllTles(4, TleFormat.CSV);
 				return null;
 			}
 
