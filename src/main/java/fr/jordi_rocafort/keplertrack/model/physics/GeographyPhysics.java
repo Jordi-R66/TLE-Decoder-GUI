@@ -1,5 +1,8 @@
 package fr.jordi_rocafort.keplertrack.model.physics;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import fr.jordi_rocafort.keplertrack.model.data.Coords3D;
 import fr.jordi_rocafort.keplertrack.model.data.GeoCoords;
 
@@ -53,5 +56,50 @@ public class GeographyPhysics {
 		double altitude = (p / Math.cos(lat)) - n;
 
 		return new GeoCoords(latitudeDeg, longitudeDeg, altitude);
+	}
+
+	public static List<GeoCoords> computeFootprint(GeoCoords satCoords, int numPoints) {
+		List<GeoCoords> footprint = new ArrayList<>();
+
+		double latRad = satCoords.lat() * Constants.DEGS2RADS;
+		double lonRad = satCoords.lng() * Constants.DEGS2RADS;
+		double alt = satCoords.altitude();
+
+		// 1. Rayon géocentrique local (prise en compte de l'ellipsoïde WGS84)
+		double a = Constants.WGS84_A;
+		double b = Constants.WGS84_B;
+		double cosLat = Math.cos(latRad);
+		double sinLat = Math.sin(latRad);
+
+		// Formule exacte du rayon depuis le centre de la Terre jusqu'à la surface pour
+		// une latitude donnée
+		double num = Math.pow(a * a * cosLat, 2) + Math.pow(b * b * sinLat, 2);
+		double den = Math.pow(a * cosLat, 2) + Math.pow(b * sinLat, 2);
+		double rLocal = Math.sqrt(num / den);
+
+		// 2. Demi-angle au centre (Earth Central Angle) pour une élévation de 0°
+		// C'est l'angle entre le centre de la Terre, le satellite et l'horizon.
+		double alpha = Math.acos(rLocal / (rLocal + alt));
+
+		// 3. Génération des points du cercle de visibilité
+		for (int i = 0; i <= numPoints; i++) {
+			// Balayage azimutal de 0 à 360 degrés
+			double azimuth = 2.0 * Math.PI * i / numPoints;
+
+			// Trigonométrie pour trouver les coordonnées du point d'horizon
+			double ptLatRad = Math.asin(Math.sin(latRad) * Math.cos(alpha) +
+					Math.cos(latRad) * Math.sin(alpha) * Math.cos(azimuth));
+
+			double ptLonRad = lonRad + Math.atan2(Math.sin(azimuth) * Math.sin(alpha) * Math.cos(latRad),
+					Math.cos(alpha) - Math.sin(latRad) * Math.sin(ptLatRad));
+
+			// Normalisation de la longitude pour qu'elle reste entre -180° et +180° (-PI à
+			// PI)
+			ptLonRad = ((ptLonRad + Math.PI) % (2.0 * Math.PI) + (2.0 * Math.PI)) % (2.0 * Math.PI) - Math.PI;
+
+			footprint.add(new GeoCoords(ptLatRad * Constants.RADS2DEGS, ptLonRad * Constants.RADS2DEGS, 0));
+		}
+
+		return footprint;
 	}
 }

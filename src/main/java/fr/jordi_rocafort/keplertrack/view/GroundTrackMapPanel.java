@@ -16,6 +16,7 @@ public class GroundTrackMapPanel extends JPanel {
 
 	private static GroundTrackMapPanel instance;
 	private GeoCoords currentPosition;
+	private List<GeoCoords> currentFootprint = new ArrayList<>();
 
 	// Historique et futur
 	private final LinkedList<GeoCoords> trackHistory = new LinkedList<>();
@@ -46,6 +47,10 @@ public class GroundTrackMapPanel extends JPanel {
 		if (trackHistory.size() > MAX_HISTORY) {
 			trackHistory.removeFirst();
 		}
+
+		this.currentFootprint = fr.jordi_rocafort.keplertrack.model.physics.GeographyPhysics.computeFootprint(geoCoords,
+				120);
+
 		this.repaint();
 	}
 
@@ -122,6 +127,35 @@ public class GroundTrackMapPanel extends JPanel {
 			g2d.setColor(new Color(100, 200, 255, 200));
 			g2d.setStroke(new BasicStroke(2.0f));
 			drawTrack(g2d, trackHistory, drawWidth, drawHeight, offsetX, offsetY);
+		}
+
+		// 5.5 Dessin de la Footprint (Zone de visibilité)
+		if (currentFootprint != null && !currentFootprint.isEmpty()) {
+			g2d.setColor(new Color(255, 255, 128, 128)); // Blanc très transparent pour le contour
+			g2d.setStroke(new BasicStroke(1.5f));
+
+			Path2D footprintPath = new Path2D.Double();
+			boolean isFirst = true;
+			GeoCoords prev = null;
+
+			for (GeoCoords pt : currentFootprint) {
+				int x = lngToX(pt.lng(), drawWidth, offsetX);
+				int y = latToY(pt.lat(), drawHeight, offsetY);
+
+				if (isFirst) {
+					footprintPath.moveTo(x, y);
+					isFirst = false;
+				} else {
+					if (Math.abs(pt.lng() - prev.lng()) > 180) {
+						footprintPath.moveTo(x, y);
+					} else {
+						footprintPath.lineTo(x, y);
+					}
+				}
+				prev = pt;
+			}
+
+			g2d.draw(footprintPath);
 		}
 
 		// 6. Dessin du satellite (point actuel)

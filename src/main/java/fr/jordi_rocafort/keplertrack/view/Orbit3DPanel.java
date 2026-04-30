@@ -23,7 +23,9 @@ public class Orbit3DPanel extends JPanel {
 	private TransformGroup earthRotGroup;
 	private TransformGroup satTransformGroup;
 	private TransformGroup viewTransform;
+
 	private Shape3D trackShape;
+	private Shape3D footprintShape;
 
 	private static final double SCALE = 1.0 / Constants.WGS84_A;
 
@@ -112,6 +114,24 @@ public class Orbit3DPanel extends JPanel {
 		trackShape.setAppearance(trackApp);
 		root.addChild(trackShape);
 
+		// 3.5 --- LA FOOTPRINT (Zone de visibilité) ---
+		footprintShape = new Shape3D();
+		footprintShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
+
+		Appearance fpApp = new Appearance();
+
+		ColoringAttributes fpColor = new ColoringAttributes(new Color3f(1.0f, 1.0f, 0.5f), ColoringAttributes.FASTEST);
+		fpApp.setColoringAttributes(fpColor);
+
+		LineAttributes fpLineAttr = new LineAttributes();
+		fpLineAttr.setLineWidth(2.0f);
+		fpLineAttr.setLineAntialiasingEnable(true);
+		fpLineAttr.setLinePattern(LineAttributes.PATTERN_DASH);
+		fpApp.setLineAttributes(fpLineAttr);
+
+		footprintShape.setAppearance(fpApp);
+		root.addChild(footprintShape);
+
 		// 4. --- LUMIÈRES ---
 		BoundingSphere bounds = new BoundingSphere(new Point3d(0.0, 0.0, 0.0), 1000.0);
 		DirectionalLight sunLight = new DirectionalLight(new Color3f(1.0f, 1.0f, 0.9f),
@@ -169,6 +189,62 @@ public class Orbit3DPanel extends JPanel {
 		rotY.rotY(gmstRad + Math.PI / 2.0);
 		if (earthRotGroup != null)
 			earthRotGroup.setTransform(rotY);
+
+		// =================================================================
+		// MISE À JOUR DE LA FOOTPRINT 3D
+		// =================================================================
+
+		// 1. Calcul de l'angle d'ouverture (alpha)
+		double satDistTrue = eciCoords.getDistanceToOrigin();
+		double earthRadiusTrue = Constants.WGS84_A;
+		// Sécurité : si le satellite est dans la Terre (crash), on limite le acos
+		double ratio = Math.min(earthRadiusTrue / satDistTrue, 1.0);
+		double alpha = Math.acos(ratio);
+
+		// 2. Création du vecteur unitaire pointant vers le satellite (dans l'espace
+		// Java3D)
+		Vector3d u = new Vector3d(x, y, z);
+		u.normalize();
+
+		// 3. Trouver deux vecteurs orthogonaux 'v' et 'w' pour former un repère sur le
+		// plan du cercle
+		Vector3d v = new Vector3d(-u.y, u.x, 0);
+		if (v.lengthSquared() < 0.001) { // Si 'u' est aligné avec l'axe Z (aux pôles)
+			v = new Vector3d(0, -u.z, u.y);
+		}
+		v.normalize();
+
+		Vector3d w = new Vector3d();
+		w.cross(u, v);
+		w.normalize();
+
+		// 4. Génération des points du cercle 3D
+		int numFpPoints = 120;
+		Point3f[] fpPoints = new Point3f[numFpPoints + 1];
+
+		double radiusVisual = 1.005;
+		double flatteningRatio = 1.0 - (1.0 / 298.257223563);
+
+		for (int i = 0; i <= numFpPoints; i++) {
+			double theta = 2.0 * Math.PI * i / numFpPoints;
+
+			double px = radiusVisual
+					* (u.x * Math.cos(alpha) + Math.sin(alpha) * (v.x * Math.cos(theta) + w.x * Math.sin(theta)));
+			double py = radiusVisual
+					* (u.y * Math.cos(alpha) + Math.sin(alpha) * (v.y * Math.cos(theta) + w.y * Math.sin(theta)));
+			double pz = radiusVisual
+					* (u.z * Math.cos(alpha) + Math.sin(alpha) * (v.z * Math.cos(theta) + w.z * Math.sin(theta)));
+
+			py *= flatteningRatio;
+
+			fpPoints[i] = new Point3f((float) px, (float) py, (float) pz);
+		}
+
+		// 5. Injection de la géométrie dans la Shape3D
+		LineStripArray fpGeom = new LineStripArray(numFpPoints + 1, GeometryArray.COORDINATES,
+				new int[] { numFpPoints + 1 });
+		fpGeom.setCoordinates(0, fpPoints);
+		footprintShape.setGeometry(fpGeom);
 	}
 
 	public void setFutureTrack(List<Coords3D> track3D) {
