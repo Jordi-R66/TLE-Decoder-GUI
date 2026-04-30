@@ -133,7 +133,7 @@ public class Orbit3DPanel extends JPanel {
 		root.addChild(footprintShape);
 
 		// 4. --- LUMIÈRES ---
-		BoundingSphere bounds = new BoundingSphere(new Point3d(0.0, 0.0, 0.0), 1000.0);
+		/*BoundingSphere bounds = new BoundingSphere(new Point3d(0.0, 0.0, 0.0), 1000.0);
 		DirectionalLight sunLight = new DirectionalLight(new Color3f(1.0f, 1.0f, 0.9f),
 				new Vector3f(1.0f, 0.0f, -1.0f));
 		sunLight.setInfluencingBounds(bounds);
@@ -141,7 +141,7 @@ public class Orbit3DPanel extends JPanel {
 
 		AmbientLight ambient = new AmbientLight(new Color3f(0.3f, 0.3f, 0.4f));
 		ambient.setInfluencingBounds(bounds);
-		root.addChild(ambient);
+		root.addChild(ambient);*/
 
 		return root;
 	}
