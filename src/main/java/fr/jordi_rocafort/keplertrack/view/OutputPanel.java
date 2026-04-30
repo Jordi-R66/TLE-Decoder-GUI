@@ -62,7 +62,7 @@ public class OutputPanel extends JPanel {
 		contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
 		contentPanel.add(createCategoryPanel("Actuellement (Temps Réel)", new String[] {
-				"DATE", "X Coord", "Y Coord", "Z Coord", "GROUND COORDINATES", "ALTITUDE", "VELOCITY", "LOCAL GRAVITY", "LORENTZ FACTOR"
+				"DATE", "X Coord", "Y Coord", "Z Coord", "GROUND COORDINATES", "ALTITUDE", "VELOCITY", "LOCAL GRAVITY"
 		}));
 
 		JScrollPane scrollPane = new JScrollPane(contentPanel);
@@ -179,6 +179,6 @@ public class OutputPanel extends JPanel {
 		updateLabel("ALTITUDE", String.format("%.0f m", instant.geoCoords().altitude()));
 		updateLabel("VELOCITY", String.format("%.2f m/s", instant.speed()));
 		updateLabel("LOCAL GRAVITY", String.format("%.2f m/s²", instant.localGravity()));
-		updateLabel("LORENTZ FACTOR", String.format("%.4e m/s", instant.lorentzFactor()));
+		//updateLabel("LORENTZ FACTOR", String.format("%.4e m/s", instant.lorentzFactor()));
 	}
 }
