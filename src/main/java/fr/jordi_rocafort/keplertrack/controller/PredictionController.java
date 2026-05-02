@@ -7,6 +7,7 @@ import fr.jordi_rocafort.keplertrack.model.data.TLE;
 import fr.jordi_rocafort.keplertrack.model.physics.PassPredictor;
 import fr.jordi_rocafort.keplertrack.util.StationManager;
 import fr.jordi_rocafort.keplertrack.view.OutputPanel;
+import fr.jordi_rocafort.keplertrack.view.PolarViewPanel; // <-- Ajout de l'import
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -16,36 +17,56 @@ import java.time.LocalDate;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionEvent;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PredictionController {
 
 	private final OutputPanel outputPanel;
-	private TLE currentTle; // Le satellite actuellement suivi
+	private TLE currentTle;
+
+	// Dictionnaire pour lier un numéro de ligne du tableau à un objet SatellitePass
+	private final Map<Integer, SatellitePass> rowToPassMap;
 
 	public PredictionController(OutputPanel outputPanel) {
 		this.outputPanel = outputPanel;
+		this.rowToPassMap = new HashMap<>();
 		initController();
 	}
 
-	// Méthode pour mettre à jour le satellite cible quand l'utilisateur en change
 	public void setCurrentTle(TLE tle) {
 		this.currentTle = tle;
 	}
 
 	private void initController() {
-		// 1. Assurer que le fichier existe et charger les stations
 		List<Station> stations = StationManager.loadStations();
 
-		// 2. Remplir la ComboBox de l'OutputPanel
 		JComboBox<Station> combo = outputPanel.getStationComboBox();
 		combo.removeAllItems();
 		for (Station s : stations) {
 			combo.addItem(s);
 		}
 
-		// 3. Listener du bouton
+		// Listener du bouton de calcul
 		outputPanel.getPredictBtn().addActionListener(this::handlePredictionRequest);
+
+		// --- NOUVEAU : Listener de sélection du tableau ---
+		outputPanel.getPassesTable().getSelectionModel().addListSelectionListener(e -> {
+			// e.getValueIsAdjusting() permet de ne traiter le clic qu'une seule fois (quand
+			// la souris est relâchée)
+			if (!e.getValueIsAdjusting()) {
+				int selectedRow = outputPanel.getPassesTable().getSelectedRow();
+
+				// Si une ligne valide est cliquée et qu'elle correspond bien à un passage (pas
+				// à une ligne de date)
+				if (selectedRow >= 0 && rowToPassMap.containsKey(selectedRow)) {
+					SatellitePass selectedPass = rowToPassMap.get(selectedRow);
+					// On envoie le passage à la vue polaire !
+					PolarViewPanel.getInstance().displayPass(selectedPass);
+				}
+			}
+		});
 	}
 
 	private void handlePredictionRequest(ActionEvent e) {
@@ -56,15 +77,6 @@ public class PredictionController {
 		}
 
 		try {
-			// 1. Récupération et parsing des paramètres de l'UI
-			/*
-			 * double lat =
-			 * Double.parseDouble(outputPanel.getLatField().getText().replace(",", "."));
-			 * double lng =
-			 * Double.parseDouble(outputPanel.getLngField().getText().replace(",", "."));
-			 * double alt =
-			 * Double.parseDouble(outputPanel.getAltField().getText().replace(",", "."));
-			 */
 			Station selectedStation = outputPanel.getSelectedStation();
 			if (selectedStation == null) {
 				JOptionPane.showMessageDialog(outputPanel, "Veuillez sélectionner un lieu d'observation.");
@@ -76,31 +88,29 @@ public class PredictionController {
 
 			GeoCoords station = new GeoCoords(stationCoords.lat(), stationCoords.lng(), stationCoords.altitude());
 
-			// 2. Paramètres temporels
 			long startSecs = System.currentTimeMillis() / 1000L;
-			long endSecs = startSecs + (days * 24L * 60L * 60L); // Jours en secondes
-			long stepSecs = 60L; // Pas de 1 minute pour la recherche grossière
+			long endSecs = startSecs + (days * 24L * 60L * 60L);
+			long stepSecs = 60L;
 
-			// 3. Préparation de l'UI pour l'attente
 			outputPanel.getPredictBtn().setEnabled(false);
 			outputPanel.getPredictBtn().setText("Computing...");
 
-			// Vider le tableau
 			DefaultTableModel tableModel = outputPanel.getPassesTableModel();
 			tableModel.setRowCount(0);
+			rowToPassMap.clear(); // On vide le cache des clics précédents
 
-			// 4. Lancement du calcul en arrière-plan via SwingWorker
+			// Si on relance un calcul, on efface aussi l'affichage de la vue polaire
+			PolarViewPanel.getInstance().clear();
+
 			SwingWorker<List<SatellitePass>, Void> worker = new SwingWorker<>() {
 				@Override
 				protected List<SatellitePass> doInBackground() throws Exception {
-					// C'EST ICI QUE LE CPU TRAVAILLE (Hors de l'UI)
 					return PassPredictor.predictPasses(currentTle, station, startSecs, endSecs, stepSecs, mask);
 				}
 
 				@Override
 				protected void done() {
 					try {
-						// Le calcul est fini, on récupère le résultat
 						List<SatellitePass> passes = get();
 						populateTable(passes);
 					} catch (Exception ex) {
@@ -108,14 +118,13 @@ public class PredictionController {
 								"Failure", JOptionPane.ERROR_MESSAGE);
 						ex.printStackTrace();
 					} finally {
-						// Rétablir le bouton
 						outputPanel.getPredictBtn().setEnabled(true);
 						outputPanel.getPredictBtn().setText("Compute Passes");
 					}
 				}
 			};
 
-			worker.execute(); // Démarre le thread
+			worker.execute();
 
 		} catch (NumberFormatException ex) {
 			JOptionPane.showMessageDialog(outputPanel, "Veuillez vérifier le format des nombres saisis.",
@@ -141,6 +150,11 @@ public class PredictionController {
 
 				if (tableModel.getRowCount() > 0) {
 					tableModel.addRow(new Object[] { dateStr, "", "", "", "" });
+					// Note: On N'AJOUTE PAS cette ligne d'en-tête dans rowToPassMap.
+					// Comme ça, cliquer sur la date ne fera rien.
+				} else if (tableModel.getRowCount() == 0) {
+					// Ajout visuel de la date pour le tout premier élément aussi
+					tableModel.addRow(new Object[] { dateStr, "", "", "", "" });
 				}
 			}
 
@@ -150,11 +164,17 @@ public class PredictionController {
 
 			long durationSecs = pass.losTime() - pass.aosTime();
 
-			//String aosDisplay = dateStr.isEmpty() ? aosTimeStr : dateStr + "  " + aosTimeStr;
 			String durationStr = String.format("%02d:%02d", durationSecs / 60, durationSecs % 60);
 			String elevStr = String.format("%.1f°", pass.maxElevation());
 
+			// On récupère l'index que la ligne va avoir (qui est égal au RowCount actuel
+			// juste avant l'ajout)
+			int rowIndex = tableModel.getRowCount();
+
 			tableModel.addRow(new Object[] { aosTimeStr, tcaTimeStr, losTimeStr, durationStr, elevStr });
+
+			// On lie cette ligne exacte au passage
+			rowToPassMap.put(rowIndex, pass);
 		}
 	}
 }

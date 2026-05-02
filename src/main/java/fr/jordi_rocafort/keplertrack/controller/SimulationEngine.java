@@ -7,6 +7,12 @@ import fr.jordi_rocafort.keplertrack.model.data.DynamicValues;
 import fr.jordi_rocafort.keplertrack.model.data.GeoCoords;
 import fr.jordi_rocafort.keplertrack.model.data.StaticValues;
 import fr.jordi_rocafort.keplertrack.model.data.TLE;
+// --- NOUVEAUX IMPORTS POUR LA VUE POLAIRE ---
+import fr.jordi_rocafort.keplertrack.model.data.Station;
+import fr.jordi_rocafort.keplertrack.model.data.TopocentricCoords;
+import fr.jordi_rocafort.keplertrack.model.physics.CoordinatesTransforms;
+import fr.jordi_rocafort.keplertrack.view.PolarViewPanel;
+// --------------------------------------------
 import fr.jordi_rocafort.keplertrack.model.physics.OrbitPropagator;
 import fr.jordi_rocafort.keplertrack.view.GroundTrackMapPanel;
 import fr.jordi_rocafort.keplertrack.view.Orbit2DPanel;
@@ -38,6 +44,8 @@ public class SimulationEngine {
 		SwingUtilities.invokeLater(() -> {
 			GroundTrackMapPanel.getInstance().clearTrack();
 			Orbit2DPanel.getInstance().clear();
+			// --- NOUVEAU : Nettoyage du Skyplot quand on change de satellite ---
+			PolarViewPanel.getInstance().clear();
 		});
 
 		isRunning = true;
@@ -82,6 +90,25 @@ public class SimulationEngine {
 					GroundTrackMapPanel.getInstance().updatePosition(instant.geoCoords());
 					Orbit2DPanel.getInstance().updateData(currentTle, currentInit, instant.coords2d());
 					Orbit3DPanel.getInstance().updatePosition(instant.coords3d(), currentTimestamp);
+
+					// --- NOUVEAU : MISE À JOUR DU SKYPLOT POLAIRE TEMPS RÉEL ---
+					// On récupère la station sélectionnée depuis l'UI (on le fait ici dans
+					// l'invokeLater pour être "Thread-Safe" avec Swing)
+					Station selectedStation = OutputPanel.getInstance().getSelectedStation();
+
+					if (selectedStation != null) {
+						// On calcule l'Azimut et l'Élévation instantanés
+						TopocentricCoords currentAER = CoordinatesTransforms.calculateAER(
+								selectedStation.coords(),
+								instant.coords3d(),
+								currentTimestamp);
+						// On envoie à la vue polaire
+						PolarViewPanel.getInstance().updateInstantPosition(currentAER);
+					} else {
+						// Pas de station, pas de point rouge
+						PolarViewPanel.getInstance().updateInstantPosition(null);
+					}
+					// -----------------------------------------------------------
 				});
 
 				try {

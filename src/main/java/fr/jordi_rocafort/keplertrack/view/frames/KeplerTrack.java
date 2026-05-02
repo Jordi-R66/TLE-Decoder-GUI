@@ -34,9 +34,25 @@ public class KeplerTrack extends JFrame {
 		// Placement : DataPanel fixe à gauche
 		this.add(dataPanel, BorderLayout.WEST);
 
-		// Panneau inférieur contenant la vue 2D et la carte (50-50 grâce au GridLayout)
+		// 1. Les "Cartes" (les vues)
+		CardLayout viewCardLayout = new CardLayout();
+		JPanel viewCards = new JPanel(viewCardLayout);
+		viewCards.add(Orbit2DPanel.getInstance(), "ORBIT_2D");
+		viewCards.add(PolarViewPanel.getInstance(), "POLAR");
+
+		// 2. Bascule au double-clic (invisible et sans perte de place)
+		viewCards.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2) {
+					viewCardLayout.next(viewCards);
+				}
+			}
+		});
+
+		// Panneau inférieur...
 		JPanel bottomPanel = new JPanel(new GridLayout(1, 2));
-		bottomPanel.add(Orbit2DPanel.getInstance());
+		bottomPanel.add(viewCards); // Ajout direct des cartes, plus de bouton !
 		bottomPanel.add(GroundTrackMapPanel.getInstance());
 
 		// Panneau droit contenant la vue 3D (Haut) et le panneau inférieur (Bas)

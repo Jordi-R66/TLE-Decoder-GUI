@@ -319,17 +319,19 @@ public class OutputPanel extends JPanel {
 	}
 
 	// Getters pour que le contrôleur puisse interagir avec la vue Prédiction
-	/*public JTextField getLatField() {
-		return latField;
-	}
-
-	public JTextField getLngField() {
-		return lngField;
-	}
-
-	public JTextField getAltField() {
-		return altField;
-	}*/
+	/*
+	 * public JTextField getLatField() {
+	 * return latField;
+	 * }
+	 * 
+	 * public JTextField getLngField() {
+	 * return lngField;
+	 * }
+	 * 
+	 * public JTextField getAltField() {
+	 * return altField;
+	 * }
+	 */
 
 	public Station getSelectedStation() {
 		return (Station) stationComboBox.getSelectedItem();
@@ -353,5 +355,9 @@ public class OutputPanel extends JPanel {
 
 	public DefaultTableModel getPassesTableModel() {
 		return passesTableModel;
+	}
+
+	public JTable getPassesTable() {
+		return passesTable;
 	}
 }
