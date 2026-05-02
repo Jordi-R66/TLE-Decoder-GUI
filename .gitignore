@@ -69,3 +69,4 @@ buildNumber.properties
 
 # TLEs
 TLEs/*
+*.csv

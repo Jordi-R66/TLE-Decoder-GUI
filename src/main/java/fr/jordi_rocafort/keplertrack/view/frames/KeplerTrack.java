@@ -2,6 +2,8 @@ package fr.jordi_rocafort.keplertrack.view.frames;
 
 import javax.swing.*;
 
+import fr.jordi_rocafort.keplertrack.controller.PredictionController;
+import fr.jordi_rocafort.keplertrack.model.data.TLE;
 import fr.jordi_rocafort.keplertrack.view.*;
 
 import java.awt.*;
@@ -10,6 +12,7 @@ import java.awt.event.*;
 public class KeplerTrack extends JFrame {
 	private static KeplerTrack instance;
 	private static DataPanel dataPanel;
+	private PredictionController predictionController;
 
 	// Variables pour stocker l'état précédent avant le plein écran
 	private boolean isFullScreen = false;
@@ -21,6 +24,8 @@ public class KeplerTrack extends JFrame {
 
 		instance = this;
 		dataPanel = DataPanel.getInstance();
+
+		this.predictionController = new PredictionController(OutputPanel.getInstance());
 
 		this.setSize(1100, 700);
 		this.setLocationRelativeTo(null);
@@ -129,6 +134,12 @@ public class KeplerTrack extends JFrame {
 
 			this.setVisible(true);
 			isFullScreen = false;
+		}
+	}
+
+	public void notifyNewTleLoaded(TLE newTle) {
+		if (this.predictionController != null) {
+			this.predictionController.setCurrentTle(newTle);
 		}
 	}
 

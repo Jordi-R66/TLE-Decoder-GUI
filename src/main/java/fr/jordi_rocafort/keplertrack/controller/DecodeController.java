@@ -7,6 +7,7 @@ import fr.jordi_rocafort.keplertrack.model.physics.OrbitPropagator;
 import fr.jordi_rocafort.keplertrack.model.tle.TleFileManager;
 import fr.jordi_rocafort.keplertrack.model.tle.TleLegacyParser;
 import fr.jordi_rocafort.keplertrack.view.*;
+import fr.jordi_rocafort.keplertrack.view.frames.KeplerTrack;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -109,6 +110,7 @@ public class DecodeController implements ActionListener {
 		// 2. Lancement en temps réel
 		if (this.tle != null && this.init != null) {
 			simulationEngine.startSimulation(tle, init);
+			KeplerTrack.getInstance().notifyNewTleLoaded(tle);
 		}
 	}
 

@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 
 import fr.jordi_rocafort.keplertrack.model.data.DateAndTime;
 import fr.jordi_rocafort.keplertrack.model.data.TLE;
+import fr.jordi_rocafort.keplertrack.model.physics.Constants;
 
 public class TimeUtils {
 
@@ -101,5 +102,35 @@ public class TimeUtils {
 		double absoluteDay = (dayOfYear - 1) + fractionOfDay + 1;
 
 		return new DateAndTime(year, absoluteDay);
+	}
+
+	/**
+	 * Calcule le Temps Sidéral Moyen de Greenwich (GMST) pour un timestamp donné.
+	 * 
+	 * @param timestampMillis Le temps en millisecondes (Unix Epoch)
+	 * @return Le GMST en radians (compris entre 0 et 2 PI)
+	 */
+	public static double calculateGMST(long timestampMillis) {
+		// 1. Conversion du timestamp Unix en Jours Juliens (JD)
+		// L'époque Unix (1er Janvier 1970) correspond au Jour Julien 2440587.5
+		double jd = (timestampMillis / 86400.0) + 2440587.5;
+
+		// 2. Jours écoulés depuis l'époque de référence J2000.0 (1er Janvier 2000 à
+		// 12h00 UT)
+		double d = jd - 2451545.0;
+
+		// 3. Calcul du GMST en degrés (formule approchée standard)
+		// 280.46061837 est l'angle de Greenwich à J2000.0
+		// 360.98564736629 est le nombre de degrés que la Terre tourne en un jour
+		// solaire
+		double gmstDeg = (280.46061837 + 360.98564736629 * d) % 360.0;
+
+		// Normalisation pour s'assurer que l'angle est positif
+		if (gmstDeg < 0) {
+			gmstDeg += 360.0;
+		}
+
+		// 4. Conversion et retour en radians
+		return gmstDeg * Constants.DEGS2RADS;
 	}
 }
