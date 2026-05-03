@@ -115,49 +115,6 @@
 					</execution>
 				</executions>
 			</plugin>
-			<plugin>
-				<groupId>com.akathist.maven.plugins.launch4j</groupId>
-				<artifactId>launch4j-maven-plugin</artifactId>
-				<version>2.5.3</version>
-				<executions>
-					<execution>
-						<id>l4j-clui</id>
-						<phase>package</phase>
-						<goals>
-							<goal>launch4j</goal>
-						</goals>
-						<configuration>
-							<headerType>gui</headerType>
-							<jar>${project.build.directory}/${project.build.finalName}.jar</jar>
-							<outfile>${project.build.directory}/KeplerTrack.exe</outfile>
-							<downloadUrl>https://java.com/download</downloadUrl>
-							<classPath>
-								<mainClass>fr.jordi_rocafort.tle_decoder.Main</mainClass>
-								<preCp>anything</preCp>
-							</classPath>
-							<jre>
-								<path>%JAVA_HOME%;%PATH%</path>
-								<requires64Bit>true</requires64Bit>
-								<opts>
-									<opt>--enable-native-access=ALL-UNNAMED</opt>
-									<opt>--add-opens=java.desktop/sun.awt=ALL-UNNAMED</opt>
-								</opts>
-							</jre>
-							<versionInfo>
-								<fileVersion>1.3.0.0</fileVersion>
-								<txtFileVersion>1.3</txtFileVersion>
-								<fileDescription>KeplerTrack</fileDescription>
-								<copyright>Jordi Rocafort</copyright>
-								<productVersion>1.3.0.0</productVersion>
-								<txtProductVersion>1.3</txtProductVersion>
-								<productName>KeplerTrack</productName>
-								<internalName>KeplerTrack</internalName>
-								<originalFilename>KeplerTrack.exe</originalFilename>
-							</versionInfo>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
 		</plugins>
 	</build>
 </project>
